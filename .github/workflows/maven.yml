@@ -1,0 +1,25 @@
+# Runs build and does unit tests
+
+name: Maven build and tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-tests:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: AdoptOpenJDK/install-jdk@v1
+      with:
+        version: '11'
+        architecture: x64
+    - name: Test Java version
+      run: java -version
+    - name: Build
+      run: mvn -X -B package --file pom.xml -DskipTests
+    - name: Run unit tests
+      run: mvn test
