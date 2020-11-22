@@ -7,6 +7,24 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
+/**
+ * class that takes screenshots and delivers them to a GIF builder
+ *
+ * still haven't decided if this should save the images as jpegs and then call another class to orchestrate a gif builder or not.
+ * the main consideration is heap space, which in tests has ran out (presumably due to the images in the captures array list being stored in memory
+ * instead of on the hard drive. thus, a good fix would be to store them in the captures folder, but there is more thought that needs to be put into that.
+ * a good file structure would probably separate GIFs into their own folders in the captures directory, as to make it clear to a parser which photos belong where,
+ * with the order determined by the names of the files, which would just be System.currentTimeMillis() at each respective time, so they could just be numerically
+ * sorted.
+ *
+ * something else that needs to happen is the capability for recording multiple gifs without restarting the program. this is pretty much a necessity and is fairly
+ * incompatible with the current set up, but could be implemented pretty easily if the photos were stored in the hard drive instead of in memory.
+ *
+ * another useful feature would be the ability to delay building GIFs until the user is ready for it, as it'd be pretty inconvienent to be running
+ * a quantization algorithm while the user is in a match or something
+ *
+ * todo: have dev mode with more thorough logs and prod mode with more user-friendly logs
+ */
 public class ScreenRecorder extends Thread {
 
     private static boolean recording = false;
@@ -26,8 +44,11 @@ public class ScreenRecorder extends Thread {
 
     public ScreenRecorder() {
         if (!capturesFolder.exists()) {
-            System.out.println(capturesFolder.mkdir());
+            if (!capturesFolder.mkdir()) {
+                System.out.println("Error initializing: captures folder could not be created. This is likely because the folder already exists, but this is likely a bug of gifngo.");
+            }
         } else {
+            // if the folder for the images exists, clear the images
             clearCapturesFolder();
         }
     }
