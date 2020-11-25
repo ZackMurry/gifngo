@@ -27,12 +27,12 @@ import java.util.ArrayList;
  */
 public class ScreenRecorder extends Thread {
 
-    private static boolean recording = false;
+    private boolean recording = false;
 
     private static final int SCREEN_WIDTH = (int) Toolkit.getDefaultToolkit().getScreenSize().getWidth();
     private static final int SCREEN_HEIGHT = (int) Toolkit.getDefaultToolkit().getScreenSize().getHeight();
 
-    private final Rectangle captureRect = new Rectangle(SCREEN_WIDTH, SCREEN_HEIGHT);
+    private static final Rectangle captureRect = new Rectangle(SCREEN_WIDTH, SCREEN_HEIGHT);
 
     private int framesPerSecond = 15;
     private int timeBetweenCapturesMs = 1000 / framesPerSecond;
@@ -75,7 +75,11 @@ public class ScreenRecorder extends Thread {
         ImageIO.write(image, "jpeg", new File(fileName));
     }
 
-    private void startRecording() {
+    public void startRecording() {
+        if (recording) {
+            System.out.println("ERROR: Cannot start recording while already recording.");
+            return;
+        }
         System.out.println("Recording...");
         if (robot == null) {
             try {
@@ -88,7 +92,11 @@ public class ScreenRecorder extends Thread {
         this.start();
     }
 
-    private void stopRecording() {
+    public void stopRecording() {
+        if (!recording) {
+            System.out.println("ERROR: Cannot stop recording if not currently recording.");
+            return;
+        }
         System.out.println("Stopped recording.");
         recording = false;
         try {
@@ -140,4 +148,43 @@ public class ScreenRecorder extends Thread {
         return timeBetweenCapturesMs;
     }
 
+    public boolean isRecording() {
+        return recording;
+    }
+    
+    public void setFramesPerSecond(int fps) {
+        if (recording) {
+            System.out.println("WARNING: Updating frames per second while recording will produce unexpected behavior.\n" +
+                              "\tThe GIF encoder will only receive the frames per second at the last frame, meaning that all of the other frames will be played at the final framerate.");
+        }
+        framesPerSecond = fps;
+        timeBetweenCapturesMs = 1000 / fps;
+    }
+    
+    public int getFramesPerSecond() {
+        return framesPerSecond;
+    }
+    
+    /**
+      * The time between captures is how long the program should wait between captures. This value is not a guarantee,
+      * because some framerates could be infeasible for some computers.
+      * 
+      * @return time between captures in milliseconds
+      */
+    public int getTimeBetweenCaptures() {
+        return timeBetweenCapturesMs;
+    }
+    
+    /**
+      * @param ms interval (in milliseconds) between captures
+      */
+    public void setTimeBetweenCaptures(int ms) {
+        if (recording) {
+            System.out.println("WARNING: Updating frames per second while recording will produce unexpected behavior.\n" +
+                              "\tThe GIF encoder will only receive the frames per second at the last frame, meaning that all of the other frames will be played at the final framerate.");
+        }
+        timeBetweenCapturesMs = ms;
+        framesPerSecond = 1000 / ms;
+    }
+    
 }
