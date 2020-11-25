@@ -8,23 +8,48 @@ import java.util.Arrays;
 
 /**
  * logic taken from this: http://www.java2s.com/Code/Java/2D-Graphics-GUI/AnimatedGifEncoder.htm
+ * see https://en.wikipedia.org/wiki/GIF#Animated_GIF for more information on what is being written
+ * along with https://www.w3.org/Graphics/GIF/spec-gif89a.txt (GIF89a specification)
+ *
+ * todo: separate class into GifMaker and GifMakerBuilder -- the former would be for producing the GIFs and the latter would be for applying settings to the GifMaker
  */
 public class GifBuilder {
 
+    // width and height of gif. by default, these are just the width and height of the first image in the gif.
     private int width;
     private int height;
+    
+    // how many times the gif should repeat. -1 is 0 times and 0 is infinitely many times
+    // doesn't just copy the gif over and over -- uses NetScape extension to do this
+    // see writeNetscapeExt() for more info
     private int repeat = -1;
+    
+    // delay between frames in hundredths of a second
     private int frameDelay;
+    
     private String fileName;
     private int sample = 10; // value used for quantizer
     private Color transparent = null; // color for transparency
-    private int dispose = -1; // disposal code (-1 = use default)
+    
+    /* disposal methods give instructions on what to do with an old frame once a new one is displayed
+       dispoal method codes (see 23 iv on https://www.w3.org/Graphics/GIF/spec-gif89a.txt for more info):
+            0: not specified
+            1: don't dipose
+            2: restore to background color
+            3: restore to previous
+       disposalMethod is initialized at -1, which indicates to writeGraphicsControlExt() that it should use a default value
+    */
+    private int disposalMethod = -1;
 
+    
     private OutputStream out;
     private BufferedImage currentFrame;
     private boolean[] usedEntry = new boolean[256];
     private int colorDepth; // number of bit planes
+    
+    // size of color table palette is 256, but decoder uses raises two to the power of (palSize + 1) to find palette size
     private int palSize = 7;
+    
     private byte[] colorTable;
     private int transparentIndex; // index of transparent in color table
     private boolean onFirstFrame = true;
@@ -41,7 +66,9 @@ public class GifBuilder {
             throw new NullPointerException("Error creating GifBuilder: OutputStream should not be null.");
         }
         out = os;
-        writeString("GIF89a"); // header
+        
+        // write header: animated GIF standard
+        writeString("GIF89a");
     }
 
     public boolean build() {
@@ -68,7 +95,8 @@ public class GifBuilder {
         }
         return this;
     }
-
+    
+    // todo move first frame initialization to withFrames method
     private boolean addFrame(BufferedImage frame) {
         if (frame == null) {
             return false;
@@ -88,7 +116,7 @@ public class GifBuilder {
                 writeLogicalScreenDescriptor();
                 writePalette(); // global color table
                 if (repeat >= 0) {
-                    // use NS app extension to indicate reps
+                    // use NS app extension to indicate repetitions
                     writeNetscapeExt();
                 }
             }
@@ -117,7 +145,7 @@ public class GifBuilder {
             // calculating square magnitude between desired color and actual
             int dr = color.getRed() - (colorTable[i++] & 0xff);
             int dg = color.getGreen() - (colorTable[i++] & 0xff);
-            int db = color.getBlue() - (colorTable[i] & 0xff); // bruhh
+            int db = color.getBlue() - (colorTable[i] & 0xff);
             int d = dr * dr + dg * dg + db * db;
             int index = i / 3;
             if (usedEntry[index] && d < dmin) {
@@ -131,6 +159,7 @@ public class GifBuilder {
     private byte[] analyzePixels(byte[] pixels) {
         int numPixels = pixels.length / 3;
         byte[] indexedPixels = new byte[numPixels];
+        // preferably turn NeuQuant.process into a static method so that i can just do NeuQuant.process(pixels, pixels.length, sample)
         NeuQuant neuQuant = new NeuQuant(pixels, pixels.length, sample);
         colorTable = neuQuant.process();
         // convert map from BGR to RGB
@@ -166,19 +195,25 @@ public class GifBuilder {
     }
 
     private void writeLogicalScreenDescriptor() throws IOException {
+        // write width of gif in pixels
         writeShort(width);
+        
+        // write height of gif in pixels
         writeShort(height);
 
-        // see https://en.wikipedia.org/wiki/GIF#Example_GIF_file
-        out.write((0x80 | // global flag color table = 1
+        // definitely see http://www.matthewflickinger.com/lab/whatsinagif/bits_and_bytes.asp#logical_screen_descriptor_block for more info on this packed byte
+        out.write(0x80 | // global color table flag
                 0x70 | // color resolution = 7
-                0x00 | // gct sort flag = 0
+                0x00 | // no gct sort flag (indicates that the color table is in random order, not in order of decreasing importance)
                 palSize // gct
-        ));
-        out.write(0); // background color index
-        out.write(0); // pixel aspect ratio (1:1)
+        );
+        out.write(0); // background color index is 0
+        out.write(0); // pixel aspect ratio is default (1:1)
     }
 
+    // todo don't really like how this is responsible for writing both the global and local color tables
+    // could maybe fix by doing away with the global color table all together (along with the gct flag, of course)
+    // it seems like the 
     private void writePalette() throws IOException {
         out.write(colorTable, 0, colorTable.length);
         int n = (3 * 256) - colorTable.length;
@@ -188,62 +223,107 @@ public class GifBuilder {
         }
     }
 
-    // see http://www.vurdalakov.net/misc/gif/netscape-looping-application-extension
+    /** 
+      * used for repeating gif without copying content
+      * see http://www.vurdalakov.net/misc/gif/netscape-looping-application-extension for information about what is being written
+      */
     private void writeNetscapeExt() throws IOException {
-        out.write(0x21); // start extension
-        out.write(0xff); // extension label
-        out.write(11); // block size
+        // write extension header
+        out.write(0x21);
+        
+        // write application extension label
+        out.write(0xff);
+        
+        // write block size
+        out.write(11);
+        
+        // write application identifier
         writeString("NETSCAPE 2.0");
-        out.write(3); // sub-block size
-        out.write(1); // loop sub-block id
-        writeShort(repeat); // num of loops (0 = repeat forever)
-        out.write(0); // terminate block
+        
+        // write sub-block data size
+        out.write(3);
+        
+        // sub-block id: loop count (1 is the ID for loop count)
+        out.write(1);
+        
+        // write loop count
+        writeShort(repeat);
+        
+        // write block terminator (0x00)
+        out.write(0);
     }
 
+    /**
+      * see http://www.matthewflickinger.com/lab/whatsinagif/bits_and_bytes.asp#graphics_control_extension_block
+      * and https://www.w3.org/Graphics/GIF/spec-gif89a.txt at 25
+      */
     private void writeGraphicControlExt() throws IOException {
-        out.write(0x21); // start extension
-        out.write(0xf9); // GCE label
-        out.write(4); // block size
-        int transp, disp;
+        // write extension header
+        out.write(0x21);
+        
+        // graphics control label
+        out.write(0xf9);
+        
+        // block size
+        out.write(4);
+        
+        int transparentFlag;
+        int disposalBits;
+        
         if (transparent == null) {
-            transp = 0;
-            disp = 0; // dispose = no action
+            transparentFlag = 0;
+            disposalBits = 0; // dispose = no action
         } else {
-            transp = 1;
-            disp = 2;
+            transparentFlag = 1;
+            disposalBits = 2;
         }
-        if (dispose >= 0) {
-            disp = dispose & 7;
+        
+        // if disposal method is not set to default
+        if (disposalMethod >= 0) {
+            // only take first 3 bits of disposalMethod
+            disposalBits = disposalMethod & 7;
         }
-        disp <<= 2;
+        
+        // left shift disposalBits by two to make the bit packing easier.
+        // the reason this works is that there are two bits of information stored to the right of the disposalBits included in this byte
+        // so we can left shift it by two to leave room for them during the bitwise OR
+        disposalBits <<= 2;
 
-        out.write(0 | // 1:3 reversed
-                 disp | // 4:6 disposal
-                0 | // 7 user input -- 0 = none
-                transp); // transparency flag
+        out.write(0 | // bits 1-3 are reserved
+                 disposalBits | // bits 4-6 are for the disposal method
+                0 | // bit 7 is for a user input flag which we aren't using
+                transparentFlag); // bit 8 is for a flag for a transparent color
 
-        writeShort(frameDelay); // delay * 1/100 secs
+        // write delay between frames
+        writeShort(frameDelay);
+        
         out.write(transparentIndex);
         out.write(0); // terminate block
     }
 
+    // see chapter 20 of GIF89a specification
     private void writeImageDescriptor() throws IOException {
-        out.write(0x2c); // image separator
-        writeShort(0); // pos: 0,0
-        writeShort(0);
+        // write image separator (it's always 0x2c)
+        out.write(0x2c);
+        
+        // top-left of image is at 0,0
+        writeShort(0); // left offset
+        writeShort(0); // top offset
+        
         writeShort(width);
         writeShort(height);
 
         if (onFirstFrame) {
             // no LCT - GCT is used for first (or only) frame
+            // todo would need to never do this if i removed the gct
             out.write(0);
         } else {
-            // normal LCT
-            out.write(0x80 | // local color table 1=yes
-                    0 | // no interlace
-                    0 | // no sorting
-                    0 | // reserved
-                    palSize); // size of color table
+            // write a global normal local color table (LCT)
+            out.write(0x80 | // bit 1: local color table flag (0x80 is 1 followed by 7 0s in binary)
+                    0 | // bit 2: no interlace
+                    0 | // bit 3: no sorting of color table
+                    0 | // bits 4-5: reserved by specification
+                    palSize); // bits 6-8: size of color table
         }
 
     }
@@ -311,7 +391,5 @@ public class GifBuilder {
         this.frameDelay = Math.round(frameDelay);
         return this;
     }
-
-
 
 }
