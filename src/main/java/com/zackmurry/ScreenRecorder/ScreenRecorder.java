@@ -32,7 +32,9 @@ public class ScreenRecorder extends Thread {
     private static final int SCREEN_WIDTH = (int) Toolkit.getDefaultToolkit().getScreenSize().getWidth();
     private static final int SCREEN_HEIGHT = (int) Toolkit.getDefaultToolkit().getScreenSize().getHeight();
 
-    private static final Rectangle captureRect = new Rectangle(SCREEN_WIDTH, SCREEN_HEIGHT);
+    private static final Rectangle CAPTURE_RECT = new Rectangle(SCREEN_WIDTH, SCREEN_HEIGHT);
+    
+    private static final String DOWNLOADS_FOLDER_PATH = System.getProperty("user.home") + "/Downloads";
 
     private int framesPerSecond = 15;
     private int timeBetweenCapturesMs = 1000 / framesPerSecond;
@@ -41,6 +43,9 @@ public class ScreenRecorder extends Thread {
 
     private Robot robot;
     private ArrayList<BufferedImage> captures = new ArrayList<>();
+    
+    private boolean saveToDownloadsFolder = true;
+    private String outputFileName;
 
     public ScreenRecorder() {
         if (!capturesFolder.exists()) {
@@ -58,7 +63,7 @@ public class ScreenRecorder extends Thread {
         while (recording) {
             try {
                 long startTime = System.currentTimeMillis();
-                BufferedImage capture = robot.createScreenCapture(captureRect);
+                BufferedImage capture = robot.createScreenCapture(CAPTURE_RECT);
                 captures.add(capture);
                 long delay = timeBetweenCapturesMs - (System.currentTimeMillis() - startTime);
                 if (delay > 0) {
@@ -105,20 +110,30 @@ public class ScreenRecorder extends Thread {
             e.printStackTrace();
         }
         System.out.println("Building GIF...");
-
+        
+        String outputPath;
+        String gifFileName = (outputFileName != null ? outputFileName : System.currentTimeMillis()) + ".gif";
+        if (saveToDownloadsFolder) {
+            // todo probably have a prettier default file name
+            outputPath = DOWNLOADS_FOLDER_PATH + gifFileName;
+        } else {
+            outputPath = gifFileName;
+        }
+        
         GifBuilder gifBuilder;
         try {
-            gifBuilder = new GifBuilder("testgif.gif");
+            gifBuilder = new GifBuilder(outputPath);
         } catch (IOException e) {
             e.printStackTrace();
             return;
         }
         System.out.println("Processing " + captures.size() + " captures...");
+        
         gifBuilder
                 .withFrameRate(framesPerSecond)
                 .withFrames(captures.toArray(BufferedImage[]::new))
                 .build();
-        System.out.println("GIF made!");
+        System.out.println("GIF successfully created.\nSaved to " + outputPath + ".");
     }
 
     public void toggleRecording() {
@@ -185,6 +200,25 @@ public class ScreenRecorder extends Thread {
         }
         timeBetweenCapturesMs = ms;
         framesPerSecond = 1000 / ms;
+    }
+    
+    /**
+      * when set to true, this will make the output directory for the gif be the downloads folder
+      */
+    public void setSaveToDownloadsFolder(boolean shouldSaveToDownloadsFolder) {
+        saveToDownloadsFolder = shouldSaveToDownloadsFolder;
+    }
+    
+    public boolean getSaveToDownloadsFolder() {
+        return saveToDowloadsFolder;
+    }
+    
+    public void setOutputFileName(String outputFileName) {
+        this.outputFileName = outputFileName;
+    }
+    
+    public String getOutputFileName() {
+        return outputFileName;
     }
     
 }
