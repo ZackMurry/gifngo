@@ -210,7 +210,7 @@ public class ScreenRecorder extends Thread {
     }
     
     public boolean getSaveToDownloadsFolder() {
-        return saveToDowloadsFolder;
+        return saveToDownloadsFolder;
     }
     
     public void setOutputFileName(String outputFileName) {
