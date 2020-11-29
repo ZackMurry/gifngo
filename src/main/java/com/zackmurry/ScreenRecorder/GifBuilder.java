@@ -4,7 +4,6 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 import java.io.*;
-import java.util.Arrays;
 
 /**
  * logic taken from this: http://www.java2s.com/Code/Java/2D-Graphics-GUI/AnimatedGifEncoder.htm
@@ -32,9 +31,9 @@ public class GifBuilder {
     private Color transparent = null; // color for transparency
     
     /* disposal methods give instructions on what to do with an old frame once a new one is displayed
-       dispoal method codes (see 23 iv on https://www.w3.org/Graphics/GIF/spec-gif89a.txt for more info):
+       disposal method codes (see 23 iv on https://www.w3.org/Graphics/GIF/spec-gif89a.txt for more info):
             0: not specified
-            1: don't dipose
+            1: don't dispose
             2: restore to background color
             3: restore to previous
        disposalMethod is initialized at -1, which indicates to writeGraphicsControlExt() that it should use a default value
@@ -53,7 +52,8 @@ public class GifBuilder {
     private byte[] colorTable;
     private int transparentIndex; // index of transparent in color table
     private boolean onFirstFrame = true;
-    private boolean closeStream;
+    private boolean closeStream = true;
+    private boolean useGlobalColorTable = false;
 
     private boolean error = false;
 
@@ -114,7 +114,9 @@ public class GifBuilder {
         try {
             if (onFirstFrame) {
                 writeLogicalScreenDescriptor();
-                writePalette(); // global color table
+                if (useGlobalColorTable) {
+                    writePalette(); // create global color table
+                }
                 if (repeat >= 0) {
                     // use NS app extension to indicate repetitions
                     writeNetscapeExt();
@@ -122,9 +124,10 @@ public class GifBuilder {
             }
             writeGraphicControlExt();
             writeImageDescriptor();
-            if (!onFirstFrame) {
+            if (!onFirstFrame || !useGlobalColorTable) {
                 writePalette(); // local color table
-            } else {
+            }
+            if (onFirstFrame) {
                 onFirstFrame = false;
             }
             writePixels(indexedPixels); // encode and write pixel data
@@ -202,7 +205,7 @@ public class GifBuilder {
         writeShort(height);
 
         // definitely see http://www.matthewflickinger.com/lab/whatsinagif/bits_and_bytes.asp#logical_screen_descriptor_block for more info on this packed byte
-        out.write(0x80 | // global color table flag
+        out.write((useGlobalColorTable ? 0x80 : 0x00) | // global color table flag (0x80 for use GCT and 0x00 for don't)
                 0x70 | // color resolution = 7
                 0x00 | // no gct sort flag (indicates that the color table is in random order, not in order of decreasing importance)
                 palSize // gct
@@ -211,7 +214,6 @@ public class GifBuilder {
         out.write(0); // pixel aspect ratio is default (1:1)
     }
 
-    // todo don't really like how this is responsible for writing both the global and local color tables
     // could maybe fix by doing away with the global color table all together (along with the gct flag, of course)
     // it seems like the 
     private void writePalette() throws IOException {
@@ -313,9 +315,8 @@ public class GifBuilder {
         writeShort(width);
         writeShort(height);
 
-        if (onFirstFrame) {
+        if (onFirstFrame && useGlobalColorTable) {
             // no LCT - GCT is used for first (or only) frame
-            // todo would need to never do this if i removed the gct
             out.write(0);
         } else {
             // write a global normal local color table (LCT)

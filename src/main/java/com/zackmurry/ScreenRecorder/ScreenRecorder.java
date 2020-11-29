@@ -34,7 +34,7 @@ public class ScreenRecorder extends Thread {
 
     private static final Rectangle CAPTURE_RECT = new Rectangle(SCREEN_WIDTH, SCREEN_HEIGHT);
     
-    private static final String DOWNLOADS_FOLDER_PATH = System.getProperty("user.home") + "/Downloads";
+    private static final String DOWNLOADS_FOLDER_PATH = System.getProperty("user.home") + File.separator + "Downloads";
 
     private int framesPerSecond = 15;
     private int timeBetweenCapturesMs = 1000 / framesPerSecond;
@@ -115,7 +115,7 @@ public class ScreenRecorder extends Thread {
         String gifFileName = (outputFileName != null ? outputFileName : System.currentTimeMillis()) + ".gif";
         if (saveToDownloadsFolder) {
             // todo probably have a prettier default file name
-            outputPath = DOWNLOADS_FOLDER_PATH + gifFileName;
+            outputPath = DOWNLOADS_FOLDER_PATH + File.separator + gifFileName;
         } else {
             outputPath = gifFileName;
         }
