@@ -1,18 +1,23 @@
 package com.zackmurry.ScreenRecorder;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 import java.io.*;
 
 /**
- * logic taken from this: http://www.java2s.com/Code/Java/2D-Graphics-GUI/AnimatedGifEncoder.htm
+ * general logic taken from this: http://www.java2s.com/Code/Java/2D-Graphics-GUI/AnimatedGifEncoder.htm
  * see https://en.wikipedia.org/wiki/GIF#Animated_GIF for more information on what is being written
  * along with https://www.w3.org/Graphics/GIF/spec-gif89a.txt (GIF89a specification)
  *
  * todo: separate class into GifMaker and GifMakerBuilder -- the former would be for producing the GIFs and the latter would be for applying settings to the GifMaker
  */
 public class GifBuilder {
+
+    private static final Logger logger = LoggerFactory.getLogger(GifBuilder.class);
 
     // width and height of gif. by default, these are just the width and height of the first image in the gif.
     private int width;
@@ -381,7 +386,7 @@ public class GifBuilder {
         if (fps > 0d) {
             frameDelay = (int) Math.round(100 / fps);
         } else {
-            System.out.println("FPS should not be less than or equal to 0. Build failed.");
+            logger.error("FPS should not be less than or equal to 0. Build failed.");
             error = true;
             return this;
         }
