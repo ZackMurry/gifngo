@@ -1,4 +1,4 @@
-package com.zackmurry.ScreenRecorder;
+package com.zackmurry.gifngo;
 
 // ==============================================================================
 // Adapted from Jef Poskanzer's Java port by way of J. M. G. Elliott.

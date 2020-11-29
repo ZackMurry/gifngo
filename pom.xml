@@ -8,7 +8,7 @@
         <maven.compiler.target>11</maven.compiler.target>
     </properties>
     <groupId>org.zackmurry</groupId>
-    <artifactId>ScreenRecorder</artifactId>
+    <artifactId>gifngo</artifactId>
     <version>1.0-SNAPSHOT</version>
 
     <dependencies>
@@ -52,13 +52,14 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
+                <version>3.2.0</version>
                 <configuration>
                     <archive>
                         <manifest>
                             <addClasspath>true</addClasspath>
                             <classpathPrefix>libs/</classpathPrefix>
                             <mainClass>
-                                com.zackmurry.ScreenRecorder.Main
+                                com.zackmurry.gifngo.Main
                             </mainClass>
                         </manifest>
                     </archive>

@@ -1,10 +1,9 @@
-package com.zackmurry.ScreenRecorder;
+package com.zackmurry.gifngo;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.imageio.ImageIO;
-import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -36,7 +35,7 @@ public class ScreenRecorderManager {
     
     private static final String DOWNLOADS_FOLDER_PATH = System.getProperty("user.home") + File.separator + "Downloads";
 
-    private int framesPerSecond = 15;
+    private int framesPerSecond = 18;
     private final String captureFolderName = "captures";
     File capturesFolder = new File(captureFolderName);
     private double acceptableFrameRateDifference = 0.5;
@@ -132,6 +131,8 @@ public class ScreenRecorderManager {
                 .withFrames(captures.toArray(BufferedImage[]::new))
                 .build();
         logger.info("GIF successfully created. Saved to {}.", outputPath);
+
+        captures.clear();
     }
 
     public void toggleRecording() {

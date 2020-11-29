@@ -1,4 +1,4 @@
-package com.zackmurry.ScreenRecorder;
+package com.zackmurry.gifngo;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +23,7 @@ public class GifBuilder {
     private int width;
     private int height;
     
-    // how many times the gif should repeat. -1 is 0 times and 0 is infinitely many times
+    // how many times the gif should repeat. -1 is 0 times and 0 is infinitely many times (a repeat value of 3 will play the GIF 3 times)
     // doesn't just copy the gif over and over -- uses NetScape extension to do this
     // see writeNetscapeExt() for more info
     private int repeat = -1;
@@ -242,10 +242,10 @@ public class GifBuilder {
         out.write(0xff);
         
         // write block size
-        out.write(11);
+        out.write(0x0b);
         
         // write application identifier
-        writeString("NETSCAPE 2.0");
+        writeString("NETSCAPE2.0");
         
         // write sub-block data size
         out.write(3);
@@ -253,11 +253,11 @@ public class GifBuilder {
         // sub-block id: loop count (1 is the ID for loop count)
         out.write(1);
         
-        // write loop count
-        writeShort(repeat);
+        // write loop count -- takes up two bytes
+        writeShort(repeat & 0xffff);
         
-        // write block terminator (0x00)
-        out.write(0);
+        // write block terminator
+        out.write(0x00);
     }
 
     /**
@@ -287,8 +287,8 @@ public class GifBuilder {
         
         // if disposal method is not set to default
         if (disposalMethod >= 0) {
-            // only take first 3 bits of disposalMethod
-            disposalBits = disposalMethod & 7;
+            // only take last 3 bits of disposalMethod
+            disposalBits = disposalMethod & 0b111;
         }
         
         // left shift disposalBits by two to make the bit packing easier.

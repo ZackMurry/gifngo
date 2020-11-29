@@ -1,4 +1,4 @@
-package com.zackmurry.ScreenRecorder;
+package com.zackmurry.gifngo;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,6 +41,8 @@ public class ScreenRecorder extends Thread {
                 if (delay > 0) {
                     // todo maybe do this https://stackoverflow.com/questions/54394042/java-how-to-avoid-using-thread-sleep-in-a-loop
                     Thread.sleep(delay);
+                } else if (delay < -5) {
+                    logger.warn("Failure to keep up with frame rate: skipped {} milliseconds.", -delay);
                 }
             } catch (InterruptedException e) {
                 e.printStackTrace();

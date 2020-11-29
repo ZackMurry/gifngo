@@ -1,4 +1,4 @@
-package com.zackmurry.ScreenRecorder;
+package com.zackmurry.gifngo;
 
 import com.tulskiy.keymaster.common.Provider;
 import org.slf4j.Logger;

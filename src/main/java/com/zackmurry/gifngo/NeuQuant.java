@@ -1,4 +1,4 @@
-package com.zackmurry.ScreenRecorder;
+package com.zackmurry.gifngo;
 
 /**
  * used for creating gifs
