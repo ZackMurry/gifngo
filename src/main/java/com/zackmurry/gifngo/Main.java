@@ -13,7 +13,7 @@ public class Main {
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
 
     public static void main(String[] args) {
-        ScreenRecorderManager recorder = new ScreenRecorderManager();
+        ScreenRecorderManager recorder = new ScreenRecorderManager(2);
         Provider provider = Provider.getCurrentProvider(false);
         provider.register(KeyStroke.getKeyStroke(KeyEvent.VK_F7, InputEvent.SHIFT_DOWN_MASK, false), hotkey -> recorder.toggleRecording());
         logger.info("Listening for commands...");

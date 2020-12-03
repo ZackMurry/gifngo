@@ -17,10 +17,25 @@ public class ScreenRecorder extends Thread {
 
     private static final Rectangle CAPTURE_RECT = new Rectangle(SCREEN_WIDTH, SCREEN_HEIGHT);
     private int timeBetweenCapturesMs;
+    private int msOffset;
     private static final Logger logger = LoggerFactory.getLogger(ScreenRecorder.class);
 
     private Robot robot;
 
+    public ScreenRecorder(int msOffset, int timeBetweenCapturesMs) {
+        this.timeBetweenCapturesMs = timeBetweenCapturesMs;
+        this.msOffset = msOffset;
+        try {
+            robot = new Robot();
+        } catch (AWTException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * assumes single-threaded if this constructor is called (records at the fps)
+     * @param framesPerSecond to record at
+     */
     public ScreenRecorder(int framesPerSecond) {
         this.timeBetweenCapturesMs = 1000 / framesPerSecond;
         try {
@@ -32,6 +47,14 @@ public class ScreenRecorder extends Thread {
 
     // todo save images as files and then load them to convert to gif maybe
     public void run() {
+        if (msOffset > 0) {
+            try {
+                Thread.sleep(msOffset);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
         while (recording) {
             try {
                 long startTime = System.currentTimeMillis();

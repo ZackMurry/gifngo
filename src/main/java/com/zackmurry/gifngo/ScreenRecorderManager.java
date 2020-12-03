@@ -8,6 +8,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * class that takes screenshots and delivers them to a GIF builder
@@ -25,7 +26,6 @@ import java.util.ArrayList;
  * another useful feature would be the ability to delay building GIFs until the user is ready for it, as it'd be pretty inconvienent to be running
  * a quantization algorithm while the user is in a match or something
  *
- * todo: have dev mode with more thorough logs and prod mode with more user-friendly logs
  */
 public class ScreenRecorderManager {
 
@@ -35,7 +35,12 @@ public class ScreenRecorderManager {
     
     private static final String DOWNLOADS_FOLDER_PATH = System.getProperty("user.home") + File.separator + "Downloads";
 
-    private int framesPerSecond = 18;
+    private int framesPerSecond = 24;
+    private int timeBetweenCapturesMs = 1000 / framesPerSecond;
+
+    // the time that each individual thread should wait between captures
+    private int timeBetweenThreadCaptures;
+
     private final String captureFolderName = "captures";
     File capturesFolder = new File(captureFolderName);
     private double acceptableFrameRateDifference = 0.5;
@@ -47,10 +52,18 @@ public class ScreenRecorderManager {
     private String outputFileName;
     private boolean recordingFailed;
 
-    private ScreenRecorder screenRecorder;
+    private final ArrayList<ScreenRecorder> screenRecorders = new ArrayList<>();
     private long recordStartTime;
+    private int threadCount;
 
     public ScreenRecorderManager() {
+        this(1);
+    }
+
+    public ScreenRecorderManager(int threadCount) {
+        this.threadCount = threadCount;
+        logger.debug("Set to record on {} threads.", threadCount);
+        this.timeBetweenThreadCaptures = timeBetweenCapturesMs * threadCount;
         if (!capturesFolder.exists()) {
             if (!capturesFolder.mkdir()) {
                 logger.error("Error initializing: captures folder could not be created.");
@@ -72,8 +85,15 @@ public class ScreenRecorderManager {
         }
         logger.info("Recording...");
         recording = true;
-        screenRecorder = new ScreenRecorder(framesPerSecond);
-        screenRecorder.startRecording();
+
+        screenRecorders.clear();
+
+        for (int i = 0; i < threadCount; i++) {
+            int recordingOffset = i * timeBetweenCapturesMs;
+            screenRecorders.add(new ScreenRecorder(recordingOffset, timeBetweenThreadCaptures));
+        }
+        // starting after construction so that they all start at roughly the same time
+        screenRecorders.forEach(ScreenRecorder::startRecording);
         recordStartTime = System.currentTimeMillis();
     }
 
@@ -84,7 +104,17 @@ public class ScreenRecorderManager {
         }
         logger.info("Stopped recording.");
         recording = false;
-        captures = screenRecorder.stopRecording();
+
+        List<List<BufferedImage>> separatedCaptures = new ArrayList<>();
+        for (ScreenRecorder recorder : screenRecorders) {
+            separatedCaptures.add(recorder.stopRecording());
+        }
+
+        for (int i = 0; i < separatedCaptures.get(screenRecorders.size() - 1).size(); i++) {
+            for (List<BufferedImage> caps : separatedCaptures) {
+                captures.add(caps.get(i));
+            }
+        }
 
         // todo maybe adjust export frame rate if the frame rate is more than a couple off
         double secondsRecorded = (System.currentTimeMillis() - recordStartTime) / 1000d;
