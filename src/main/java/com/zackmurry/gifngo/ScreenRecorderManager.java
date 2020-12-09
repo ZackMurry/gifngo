@@ -112,7 +112,9 @@ public class ScreenRecorderManager {
 
         for (int i = 0; i < separatedCaptures.get(screenRecorders.size() - 1).size(); i++) {
             for (List<BufferedImage> caps : separatedCaptures) {
-                captures.add(caps.get(i));
+                if (i < caps.size()) {
+                    captures.add(caps.get(i));
+                }
             }
         }
 
@@ -145,9 +147,9 @@ public class ScreenRecorderManager {
             outputPath = gifFileName;
         }
         
-        GifBuilder gifBuilder;
+        GifConverterBuilder gifConverterBuilder;
         try {
-            gifBuilder = new GifBuilder(outputPath);
+            gifConverterBuilder = new GifConverterBuilder(outputPath);
         } catch (IOException e) {
             e.printStackTrace();
             return;
@@ -156,10 +158,11 @@ public class ScreenRecorderManager {
 
 
         
-        gifBuilder
+        GifConverter gifConverter = gifConverterBuilder
                 .withFrameRate(framesPerSecond)
                 .withFrames(captures.toArray(BufferedImage[]::new))
                 .build();
+        gifConverter.process();
         logger.info("GIF successfully created. Saved to {}.", outputPath);
 
         captures.clear();

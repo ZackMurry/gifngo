@@ -16,7 +16,7 @@ public class ScreenRecorder extends Thread {
     private static final int SCREEN_HEIGHT = (int) Toolkit.getDefaultToolkit().getScreenSize().getHeight();
 
     private static final Rectangle CAPTURE_RECT = new Rectangle(SCREEN_WIDTH, SCREEN_HEIGHT);
-    private int timeBetweenCapturesMs;
+    private final int timeBetweenCapturesMs;
     private int msOffset;
     private static final Logger logger = LoggerFactory.getLogger(ScreenRecorder.class);
 
@@ -54,7 +54,7 @@ public class ScreenRecorder extends Thread {
                 e.printStackTrace();
             }
         }
-
+        logger.debug("Thread {} starting recording.", super.getName());
         while (recording) {
             try {
                 long startTime = System.currentTimeMillis();
