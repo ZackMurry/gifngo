@@ -46,4 +46,6 @@ public interface VideoProducer {
 
     boolean isReady();
 
+    VideoProducer cloneSettings();
+
 }

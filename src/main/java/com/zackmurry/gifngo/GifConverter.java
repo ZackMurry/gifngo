@@ -12,8 +12,11 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.List;
 
-
-public final class GifConverter implements VideoProducer, Cloneable {
+/**
+ * Class that converts a list of BufferedImages into a GIF89a format (https://www.w3.org/Graphics/GIF/spec-gif89a.txt)
+ * some logic taken from here: http://www.java2s.com/Code/Java/2D-Graphics-GUI/AnimatedGifEncoder.htm
+ */
+public final class GifConverter implements VideoProducer {
 
     public static final double DEFAULT_FRAMES_PER_SECOND = 24;
 
@@ -47,7 +50,7 @@ public final class GifConverter implements VideoProducer, Cloneable {
     // doesn't just copy the gif over and over -- uses NetScape extension to do this
     // see writeNetscapeExt() for more info
     @Getter @Setter
-    private int repeat = -1;
+    private int repeat = 0;
 
     /* disposal methods give instructions on what to do with an old frame once a new one is displayed
        disposal method codes (see 23 iv on https://www.w3.org/Graphics/GIF/spec-gif89a.txt for more info):
@@ -87,9 +90,13 @@ public final class GifConverter implements VideoProducer, Cloneable {
         this.outputStream = outputStream;
     }
 
+    /**
+     * method that starts the processing of frames and saves the gif to the OutputStream
+     * @return boolean representing if the converting succeeded
+     */
     @Override
     public boolean process() {
-        if (encounteredError) {
+        if (encounteredError || !isReady()) {
             return false;
         }
 
@@ -422,12 +429,20 @@ public final class GifConverter implements VideoProducer, Cloneable {
     }
 
     /**
-     * clones settings of GifConverter, not the frames and stuff
+     * clones settings of GifConverter, not the frames and stuff.
+     * notably doesn't clone width and height, as almost always, those are determined by the class itself
      * @return a copy of this with the settings given to it previously
-     * @throws CloneNotSupportedException never really thrown
      */
     @Override
-    protected GifConverter clone() throws CloneNotSupportedException {
-        return (GifConverter) super.clone();
+    public GifConverter cloneSettings() {
+        GifConverter clone = new GifConverter();
+        clone.setRepeat(repeat);
+        clone.setQuantizationSample(quantizationSample);
+        clone.setTransparentColor(transparentColor);
+        clone.setShouldCloseStream(shouldCloseStream);
+        clone.setFrameDelay(frameDelay);
+        clone.setDisposalMethod(disposalMethod);
+        clone.setUseGlobalColorTable(useGlobalColorTable);
+        return clone;
     }
 }

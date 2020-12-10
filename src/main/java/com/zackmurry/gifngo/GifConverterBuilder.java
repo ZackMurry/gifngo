@@ -5,18 +5,13 @@ import org.slf4j.LoggerFactory;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.awt.image.DataBufferByte;
 import java.io.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * general logic taken from this: http://www.java2s.com/Code/Java/2D-Graphics-GUI/AnimatedGifEncoder.htm
  * see https://en.wikipedia.org/wiki/GIF#Animated_GIF for more information on what is being written
- * along with https://www.w3.org/Graphics/GIF/spec-gif89a.txt (GIF89a specification)
- *
- * todo: separate class into GifMaker and GifMakerBuilder -- the former would be for producing the GIFs and the latter would be for applying settings to the GifMaker
  */
 public class GifConverterBuilder {
 
@@ -48,11 +43,7 @@ public class GifConverterBuilder {
             logger.error("Error finishing GifConverter build: GifConverter needs a list of frames, the fps it needs to record at (or a frame delay), and an OutputStream. One or more of these are not present.");
             return null;
         }
-        try {
-            return gifConverter.clone();
-        } catch (CloneNotSupportedException e) {
-            return null;
-        }
+        return gifConverter.cloneSettings();
     }
 
     public GifConverterBuilder withFrames(BufferedImage[] frames) {

@@ -1,5 +1,7 @@
 package com.zackmurry.gifngo;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,7 +25,7 @@ import java.util.List;
  * something else that needs to happen is the capability for recording multiple gifs without restarting the program. this is pretty much a necessity and is fairly
  * incompatible with the current set up, but could be implemented pretty easily if the photos were stored in the hard drive instead of in memory.
  *
- * another useful feature would be the ability to delay building GIFs until the user is ready for it, as it'd be pretty inconvienent to be running
+ * another useful feature would be the ability to delay building GIFs until the user is ready for it, as it'd be pretty inconvenient to be running
  * a quantization algorithm while the user is in a match or something
  *
  */
@@ -35,7 +37,9 @@ public class ScreenRecorderManager {
     
     private static final String DOWNLOADS_FOLDER_PATH = System.getProperty("user.home") + File.separator + "Downloads";
 
+    @Getter
     private int framesPerSecond = 24;
+
     private int timeBetweenCapturesMs = 1000 / framesPerSecond;
 
     // the time that each individual thread should wait between captures
@@ -43,15 +47,23 @@ public class ScreenRecorderManager {
 
     private final String captureFolderName = "captures";
     File capturesFolder = new File(captureFolderName);
-    private double acceptableFrameRateDifference = 0.5;
-    private boolean failOnUnacceptableFrameRate = true;
 
-    private ArrayList<BufferedImage> captures = new ArrayList<>();
-    
+    @Getter @Setter
+    private double strictFps = -1;
+
+    @Getter @Setter
     private boolean saveToDownloadsFolder = true;
-    private String outputFileName;
-    private boolean recordingFailed;
 
+    @Getter @Setter
+    private String outputFileName;
+
+    @Getter @Setter
+    private int repeat = 0;
+
+    @Getter @Setter
+    private boolean singleRecording = false;
+
+    private final ArrayList<BufferedImage> captures = new ArrayList<>();
     private final ArrayList<ScreenRecorder> screenRecorders = new ArrayList<>();
     private long recordStartTime;
     private int threadCount;
@@ -118,22 +130,18 @@ public class ScreenRecorderManager {
             }
         }
 
-        // todo maybe adjust export frame rate if the frame rate is more than a couple off
+        // todo adjust export frame rate to real frame rate
         double secondsRecorded = (System.currentTimeMillis() - recordStartTime) / 1000d;
         double realFramesPerSecond = captures.size() / secondsRecorded;
         logger.debug("Recorded for {} seconds at {} frames per second. Recorded at {} real frames per second.", secondsRecorded, framesPerSecond, realFramesPerSecond);
-        if (realFramesPerSecond - acceptableFrameRateDifference > framesPerSecond || realFramesPerSecond + acceptableFrameRateDifference < framesPerSecond) {
-            if (failOnUnacceptableFrameRate) {
-                logger.error("Frame rate unacceptable. Expected frame rate: {}; real frame rate: {}.", framesPerSecond, realFramesPerSecond);
-                recordingFailed = true;
+        double absStrictFps = Math.abs(strictFps);
+        if (strictFps != 0 && (realFramesPerSecond - absStrictFps > framesPerSecond || realFramesPerSecond + absStrictFps < framesPerSecond)) {
+            if (strictFps > 0) {
+                logger.error("Recording failed: expected {} +/- {} frames per second, but got {} frames per second.", framesPerSecond, strictFps, realFramesPerSecond);
+                return;
             } else {
-                logger.warn("Frame rate unacceptable. Expected frame rate: {}; real frame rate: {}.", framesPerSecond, realFramesPerSecond);
+                logger.warn("Frames per second is more than {} away from the desired frame rate ({}). Frame rate: {}. Continuing...", -strictFps, framesPerSecond, realFramesPerSecond);
             }
-        }
-
-        if (recordingFailed) {
-            logger.error("Recording failed. There is likely more logs above.");
-            return;
         }
 
         logger.info("Building GIF...");
@@ -166,6 +174,9 @@ public class ScreenRecorderManager {
         logger.info("GIF successfully created. Saved to {}.", outputPath);
 
         captures.clear();
+        if (singleRecording) {
+            System.exit(0);
+        }
     }
 
     public void toggleRecording() {
@@ -196,29 +207,8 @@ public class ScreenRecorderManager {
             logger.warn("Updating frames per second while recording will produce unexpected behavior. The GIF encoder will only receive the frames per second at the last frame, meaning that all of the other frames will be played at the final framerate.");
         }
         framesPerSecond = fps;
-    }
-    
-    public int getFramesPerSecond() {
-        return framesPerSecond;
-    }
-    
-    /**
-      * when set to true, this will make the output directory for the gif be the downloads folder
-      */
-    public void setSaveToDownloadsFolder(boolean shouldSaveToDownloadsFolder) {
-        saveToDownloadsFolder = shouldSaveToDownloadsFolder;
-    }
-    
-    public boolean getSaveToDownloadsFolder() {
-        return saveToDownloadsFolder;
-    }
-    
-    public void setOutputFileName(String outputFileName) {
-        this.outputFileName = outputFileName;
-    }
-    
-    public String getOutputFileName() {
-        return outputFileName;
+        timeBetweenCapturesMs = 1000 / fps;
+        timeBetweenThreadCaptures = timeBetweenCapturesMs * threadCount;
     }
     
 }
