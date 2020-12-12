@@ -21,3 +21,15 @@ You can set the behavior of the gif after it is done playing by using the option
 
 ### thread count
 If you notice that the program is running too slow, you can up the number of threads to compensate by using the option `--threads [value]` or `-t [value]`. The default number of threads is two.
+
+### strict fps
+If you'd like to enforce a certain number of frames per second, you can set how far away from your target frame rate is unacceptable by using the option `--strict-fps [value]` or `-s [value]`. A value of zero gives no warnings about frame rate. A negative value will warn you if the frame rate is more than 'value' away from your target frame rate. A positive value will cancel the building of the gif if the frame rate is unacceptable (more than 'value' away from the target). The default value is -3.
+
+### single recording
+If you'd like to end the program after recording one gif, you can use the option `--single-recording` or `-sr`.
+
+### help
+If you'd like a list of commands, you can use the option `--help` or `-h`.
+
+### debug
+If you'd like to enable debug mode, you can use the option `--debug` or `-d`.
