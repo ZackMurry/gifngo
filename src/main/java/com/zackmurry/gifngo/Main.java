@@ -35,9 +35,6 @@ public class Main {
         recorder.setStrictFps(cla.getStrictFps());
         recorder.setSingleRecording(cla.isSingleRecording());
 
-
-        System.out.println("fps: " + cla.getFramesPerSecond() + "; tc: " + cla.getThreadCount() + "; r: " + cla.getRepeat());
-
         Provider provider = Provider.getCurrentProvider(false);
         provider.register(KeyStroke.getKeyStroke(KeyEvent.VK_F7, InputEvent.SHIFT_DOWN_MASK, false), hotkey -> recorder.toggleRecording());
         logger.info("Listening for commands...");
