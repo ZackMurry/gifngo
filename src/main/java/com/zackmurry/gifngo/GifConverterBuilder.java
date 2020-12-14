@@ -46,12 +46,12 @@ public class GifConverterBuilder {
         return gifConverter.cloneSettings();
     }
 
-    public GifConverterBuilder withFrames(BufferedImage[] frames) {
+    public GifConverterBuilder withFrames(Frame[] frames) {
         this.gifConverter.setFrames(Arrays.stream(frames).collect(Collectors.toList()));
         return this;
     }
 
-    public GifConverterBuilder withFrames(List<BufferedImage> frames) {
+    public GifConverterBuilder withFrames(List<Frame> frames) {
         this.gifConverter.setFrames(frames);
         return this;
     }

@@ -23,7 +23,7 @@ public final class GifConverter implements VideoProducer {
     private final Logger logger = LoggerFactory.getLogger(GifConverter.class);
 
     @Getter @Setter
-    private List<BufferedImage> frames;
+    private List<Frame> frames;
 
     @Getter @Setter
     private OutputStream outputStream;
@@ -58,7 +58,7 @@ public final class GifConverter implements VideoProducer {
             1: don't dispose
             2: restore to background color
             3: restore to previous
-       disposalMethod is initialized at -1, which indicates to writeGraphicsControlExt() that it should use a default value
+       disposalMethod is initialized at -1, which indicates to writeGraphicControlExt() that it should use a default value
     */
     @Getter @Setter
     private int disposalMethod = -1;
@@ -72,6 +72,7 @@ public final class GifConverter implements VideoProducer {
     private byte[] colorTable;
     private int colorDepth; // number of bit planes
     private final boolean[] usedEntry = new boolean[256];
+    private int previousFrameTime;
 
     // size of color table palette is 256, but decoder uses raises two to the power of (palSize + 1) to find palette size
     private int palSize = 7;
@@ -81,11 +82,11 @@ public final class GifConverter implements VideoProducer {
 
     }
 
-    public GifConverter(List<BufferedImage> frames) {
+    public GifConverter(List<Frame> frames) {
         this.frames = frames;
     }
 
-    public GifConverter(List<BufferedImage> frames, OutputStream outputStream) {
+    public GifConverter(List<Frame> frames, OutputStream outputStream) {
         this.frames = frames;
         this.outputStream = outputStream;
     }
@@ -136,16 +137,17 @@ public final class GifConverter implements VideoProducer {
         return !encounteredError;
     }
 
-    private void processFrame(BufferedImage frame) {
+    private void processFrame(Frame frame) {
         if (frame == null) {
             encounteredError = true;
             return;
         }
 
-        byte[] pixels = getImagePixels(frame);
+        byte[] pixels = getImagePixels(frame.getImage());
         byte[] indexedPixels = analyzePixels(pixels);
         try {
-            writeGraphicControlExt();
+            writeGraphicControlExt((int) Math.round((frame.getTimeSinceStart() - previousFrameTime) / 10d));
+            previousFrameTime = frame.getTimeSinceStart();
             writeImageDescriptor();
             if (!useGlobalColorTable) {
                 writePalette();
@@ -162,13 +164,13 @@ public final class GifConverter implements VideoProducer {
     private void doFirstFrameProcessing() {
         try {
 
-            BufferedImage firstFrame = frames.get(0);
+            Frame firstFrame = frames.get(0);
 
             if (width == 0) {
-                width = firstFrame.getWidth();
+                width = firstFrame.getImage().getWidth();
             }
             if (height == 0) {
-                height = firstFrame.getHeight();
+                height = firstFrame.getImage().getHeight();
             }
 
             if (useGlobalColorTable) {
@@ -187,10 +189,11 @@ public final class GifConverter implements VideoProducer {
                 writeNetscapeExt();
             }
 
-            byte[] pixels = getImagePixels(firstFrame);
+            byte[] pixels = getImagePixels(firstFrame.getImage());
             byte[] indexedPixels = analyzePixels(pixels);
 
-            writeGraphicControlExt();
+            writeGraphicControlExt(firstFrame.getTimeSinceStart());
+            previousFrameTime = firstFrame.getTimeSinceStart();
             writeImageDescriptor();
             if (!useGlobalColorTable) {
                 writePalette();
@@ -374,6 +377,58 @@ public final class GifConverter implements VideoProducer {
         // this would probably involve wrapping each frame in an object that contains the time (could be absolute or relative to the recording start)
         // and then iterating through them to find gaps in frames and compensating through them like that.
         writeShort(frameDelay);
+
+        outputStream.write(transparentIndex);
+        outputStream.write(0); // terminate block
+    }
+
+    /**
+     * see http://www.matthewflickinger.com/lab/whatsinagif/bits_and_bytes.asp#graphics_control_extension_block
+     * and https://www.w3.org/Graphics/GIF/spec-gif89a.txt at 25
+     */
+    private void writeGraphicControlExt(int time) throws IOException {
+        // write extension header
+        outputStream.write(0x21);
+
+        // graphics control label
+        outputStream.write(0xf9);
+
+        // block size
+        outputStream.write(4);
+
+        int transparentFlag;
+        int disposalBits;
+
+        if (transparentColor == null) {
+            transparentFlag = 0;
+            disposalBits = 0; // dispose = no action
+        } else {
+            transparentFlag = 1;
+            disposalBits = 2;
+        }
+
+        // if disposal method is not set to default
+        if (disposalMethod >= 0) {
+            // only take last 3 bits of disposalMethod
+            disposalBits = disposalMethod & 0b111;
+        }
+
+        // left shift disposalBits by two to make the bit packing easier.
+        // the reason this works is that there are two bits of information stored to the right of the disposalBits included in this byte
+        // so we can left shift it by two to leave room for them during the bitwise OR
+        disposalBits <<= 2;
+
+        outputStream.write(0 | // bits 1-3 are reserved
+                disposalBits | // bits 4-6 are for the disposal method
+                0 | // bit 7 is for a user input flag which we aren't using
+                transparentFlag); // bit 8 is for a flag for a transparent color
+
+        // write delay between frames
+        // todo this could be set to account for variations in frame rate
+        // for example, if a n frames were skipped before this one, it could be played for (n + 1) times as long to compensate.
+        // this would probably involve wrapping each frame in an object that contains the time (could be absolute or relative to the recording start)
+        // and then iterating through them to find gaps in frames and compensating through them like that.
+        writeShort(time);
 
         outputStream.write(transparentIndex);
         outputStream.write(0); // terminate block

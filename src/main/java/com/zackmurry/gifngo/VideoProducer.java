@@ -38,8 +38,8 @@ public interface VideoProducer {
     void setDisposalMethod(int disposalMethod);
     int getDisposalMethod();
 
-    void setFrames(List<BufferedImage> frames);
-    List<BufferedImage> getFrames();
+    void setFrames(List<Frame> frames);
+    List<Frame> getFrames();
 
     void setOutputStream(OutputStream out);
     OutputStream getOutputStream();

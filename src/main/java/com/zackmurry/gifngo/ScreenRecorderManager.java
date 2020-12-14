@@ -67,7 +67,7 @@ public class ScreenRecorderManager {
     @Getter @Setter
     private ImageDimension outputDimensions = new ImageDimension(960, 540);
 
-    private final ArrayList<BufferedImage> captures = new ArrayList<>();
+    private final ArrayList<Frame> captures = new ArrayList<>();
     private final ArrayList<ScreenRecorder> screenRecorders = new ArrayList<>();
     private long recordStartTime;
     private int threadCount;
@@ -121,13 +121,13 @@ public class ScreenRecorderManager {
         logger.info("Stopped recording.");
         recording = false;
 
-        List<List<BufferedImage>> separatedCaptures = new ArrayList<>();
+        List<List<Frame>> separatedCaptures = new ArrayList<>();
         for (ScreenRecorder recorder : screenRecorders) {
             separatedCaptures.add(recorder.stopRecording());
         }
 
         for (int i = 0; i < separatedCaptures.get(screenRecorders.size() - 1).size(); i++) {
-            for (List<BufferedImage> caps : separatedCaptures) {
+            for (List<Frame> caps : separatedCaptures) {
                 if (i < caps.size()) {
                     captures.add(caps.get(i));
                 }
@@ -168,9 +168,11 @@ public class ScreenRecorderManager {
         }
         logger.info("Processing {} captures...", captures.size());
 
+        captures.forEach(capture -> capture.setImage(ImageResizer.resize(capture.getImage(), outputDimensions)));
+
         GifConverter gifConverter = gifConverterBuilder
                 .withFrameRate(framesPerSecond)
-                .withFrames(captures.stream().map(capture -> ImageResizer.resize(capture, outputDimensions)).toArray(BufferedImage[]::new))
+                .withFrames(captures)
                 .build();
         gifConverter.process();
         logger.info("GIF successfully created. Saved to {}.", outputPath);

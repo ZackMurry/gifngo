@@ -4,12 +4,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.awt.*;
-import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 
 public class ScreenRecorder extends Thread {
 
-    private final ArrayList<BufferedImage> captures = new ArrayList<>();
+    private static final Logger logger = LoggerFactory.getLogger(ScreenRecorder.class);
+
+    private final ArrayList<Frame> captures = new ArrayList<>();
     private boolean recording;
 
     private static final int SCREEN_WIDTH = (int) Toolkit.getDefaultToolkit().getScreenSize().getWidth();
@@ -18,7 +19,6 @@ public class ScreenRecorder extends Thread {
     private static final Rectangle CAPTURE_RECT = new Rectangle(SCREEN_WIDTH, SCREEN_HEIGHT);
     private final int timeBetweenCapturesMs;
     private int msOffset;
-    private static final Logger logger = LoggerFactory.getLogger(ScreenRecorder.class);
 
     private Robot robot;
 
@@ -47,6 +47,7 @@ public class ScreenRecorder extends Thread {
 
     // todo save images as files and then load them to convert to gif maybe
     public void run() {
+        long recordStartTime = System.currentTimeMillis();
         if (msOffset > 0) {
             try {
                 Thread.sleep(msOffset);
@@ -58,7 +59,7 @@ public class ScreenRecorder extends Thread {
         while (recording) {
             try {
                 long startTime = System.currentTimeMillis();
-                BufferedImage capture = robot.createScreenCapture(CAPTURE_RECT);
+                Frame capture = new Frame(robot.createScreenCapture(CAPTURE_RECT), (int) (System.currentTimeMillis() - recordStartTime));
                 captures.add(capture);
                 long delay = timeBetweenCapturesMs - (System.currentTimeMillis() - startTime);
                 if (delay > 0) {
@@ -78,7 +79,7 @@ public class ScreenRecorder extends Thread {
         this.start();
     }
 
-    public ArrayList<BufferedImage> stopRecording() {
+    public ArrayList<Frame> stopRecording() {
         recording = false;
         try {
             this.join();
