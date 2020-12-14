@@ -34,6 +34,14 @@ public class Main {
         recorder.setRepeat(cla.getRepeat());
         recorder.setStrictFps(cla.getStrictFps());
         recorder.setSingleRecording(cla.isSingleRecording());
+        
+        try {
+            ImageDimension outputDimensions = ImageDimension.fromString(cla.getResolution());
+            recorder.setOutputDimensions(outputDimensions);
+        } catch (IllegalArgumentException e) {
+            logger.warn(e.getMessage());
+            logger.info("Defaulting output resolution to 960x540");
+        }
 
         Provider provider = Provider.getCurrentProvider(false);
         provider.register(KeyStroke.getKeyStroke(KeyEvent.VK_F7, InputEvent.SHIFT_DOWN_MASK, false), hotkey -> recorder.toggleRecording());

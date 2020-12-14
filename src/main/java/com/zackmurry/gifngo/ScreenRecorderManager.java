@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.imageio.ImageIO;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -62,6 +63,9 @@ public class ScreenRecorderManager {
 
     @Getter @Setter
     private boolean singleRecording = false;
+
+    @Getter @Setter
+    private ImageDimension outputDimensions = new ImageDimension(960, 540);
 
     private final ArrayList<BufferedImage> captures = new ArrayList<>();
     private final ArrayList<ScreenRecorder> screenRecorders = new ArrayList<>();
@@ -164,11 +168,9 @@ public class ScreenRecorderManager {
         }
         logger.info("Processing {} captures...", captures.size());
 
-
-        
         GifConverter gifConverter = gifConverterBuilder
                 .withFrameRate(framesPerSecond)
-                .withFrames(captures.toArray(BufferedImage[]::new))
+                .withFrames(captures.stream().map(capture -> ImageResizer.resize(capture, outputDimensions)).toArray(BufferedImage[]::new))
                 .build();
         gifConverter.process();
         logger.info("GIF successfully created. Saved to {}.", outputPath);

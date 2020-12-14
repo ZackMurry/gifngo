@@ -46,7 +46,7 @@ public final class GifConverter implements VideoProducer {
     @Setter
     private boolean useGlobalColorTable;
 
-    // how many times the gif should repeat. -1 is 0 times and 0 is infinitely many times (a repeat value of 3 will play the GIF 3 times)
+    // how many times the gif should repeat. 0 is infinitely many times (a repeat value of 3 will play the GIF 3 times)
     // doesn't just copy the gif over and over -- uses NetScape extension to do this
     // see writeNetscapeExt() for more info
     @Getter @Setter
@@ -175,16 +175,16 @@ public final class GifConverter implements VideoProducer {
                 writePalette();
             }
 
-            if (repeat >= 0) {
-                writeNetscapeExt();
-            }
-
             try {
                 writeLogicalScreenDescriptor();
             } catch (IOException e) {
                 logger.error("Error writing logical screen descriptor.");
                 e.printStackTrace();
                 encounteredError = true;
+            }
+
+            if (repeat == 0 || repeat > 1) {
+                writeNetscapeExt();
             }
 
             byte[] pixels = getImagePixels(firstFrame);
@@ -289,7 +289,7 @@ public final class GifConverter implements VideoProducer {
         writeShort(height);
 
         // write a flags for normal local color table (LCT)
-        outputStream.write(0b10000000 | // bit 1: local color table flag (0x80 is 1 followed by 7 0s in binary)
+        outputStream.write(0b10000000 | // bit 1: local color table flag
                 0 | // bit 2: no interlace
                 0 | // bit 3: no sorting of color table
                 0 | // bits 4-5: reserved by specification
@@ -369,6 +369,10 @@ public final class GifConverter implements VideoProducer {
                 transparentFlag); // bit 8 is for a flag for a transparent color
 
         // write delay between frames
+        // todo this could be set to account for variations in frame rate
+        // for example, if a n frames were skipped before this one, it could be played for (n + 1) times as long to compensate.
+        // this would probably involve wrapping each frame in an object that contains the time (could be absolute or relative to the recording start)
+        // and then iterating through them to find gaps in frames and compensating through them like that.
         writeShort(frameDelay);
 
         outputStream.write(transparentIndex);

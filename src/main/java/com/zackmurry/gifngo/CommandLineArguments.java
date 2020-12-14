@@ -4,14 +4,16 @@ import com.beust.jcommander.Parameter;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.awt.*;
+
 @Getter
 @Setter
 public class CommandLineArguments {
 
     @Parameter(names = {"--fps", "-f"}, description = "Frames per second to record at.")
-    private int framesPerSecond = 24;
+    private int framesPerSecond = 18;
 
-    @Parameter(names = {"--repeat", "-r"}, description = "Number of times to play the GIF. -1 means don't repeat. 0 means repeat infinitely. Greater than 0 means play r times.")
+    @Parameter(names = {"--repeat", "-r"}, description = "Number of times to play the GIF. 0 means repeat infinitely. Greater than 0 means play r times.")
     private int repeat = 0;
 
     @Parameter(names = {"--threads", "-t"}, description = "Number of threads to record on.")
@@ -28,7 +30,10 @@ public class CommandLineArguments {
     @Parameter(names = {"--help", "-h"}, description = "List options.", help = true)
     private boolean help = false;
 
-    @Parameter(names = {"--debug", "-d"})
+    @Parameter(names = {"--debug", "-d"}, description = "Use debug logging.")
     private boolean debug = false;
+
+    @Parameter(names = {"--resolution", "-res"}, description = "Set the output resolution. Should be in the format WIDTHxHEIGHT, where WIDTH and HEIGHT are positive integers.")
+    private String resolution = "960x540";
 
 }

@@ -33,3 +33,6 @@ If you'd like a list of commands, you can use the option `--help` or `-h`.
 
 ### debug
 If you'd like to enable debug mode, you can use the option `--debug` or `-d`.
+
+### resolution
+To change the output resolution, use the option `--resolution [value]` or `-res [value]`, where `[value]` is in the format of `WIDTHxHEIGHT`, with `WIDTH` and `HEIGHT` being positive integers. 
