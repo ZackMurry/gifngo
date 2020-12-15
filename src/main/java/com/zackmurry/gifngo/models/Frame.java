@@ -1,4 +1,4 @@
-package com.zackmurry.gifngo;
+package com.zackmurry.gifngo.models;
 
 import lombok.Getter;
 import lombok.Setter;

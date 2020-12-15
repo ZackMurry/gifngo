@@ -3,6 +3,8 @@ package com.zackmurry.gifngo;
 import ch.qos.logback.classic.Level;
 import com.beust.jcommander.JCommander;
 import com.tulskiy.keymaster.common.Provider;
+import com.zackmurry.gifngo.models.ImageDimension;
+import com.zackmurry.gifngo.recorder.ScreenRecorderManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

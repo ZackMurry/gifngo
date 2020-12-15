@@ -1,4 +1,4 @@
-package com.zackmurry.gifngo;
+package com.zackmurry.gifngo.converter.algorithms;
 
 /**
  * used for creating gifs

@@ -1,5 +1,6 @@
-package com.zackmurry.gifngo;
+package com.zackmurry.gifngo.recorder;
 
+import com.zackmurry.gifngo.models.Frame;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

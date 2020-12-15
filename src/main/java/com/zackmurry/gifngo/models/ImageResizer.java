@@ -1,4 +1,4 @@
-package com.zackmurry.gifngo;
+package com.zackmurry.gifngo.models;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;

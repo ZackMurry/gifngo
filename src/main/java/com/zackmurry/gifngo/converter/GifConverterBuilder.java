@@ -1,10 +1,10 @@
-package com.zackmurry.gifngo;
+package com.zackmurry.gifngo.converter;
 
+import com.zackmurry.gifngo.models.Frame;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.awt.*;
-import java.awt.image.BufferedImage;
 import java.io.*;
 import java.util.Arrays;
 import java.util.List;

@@ -1,7 +1,8 @@
-package com.zackmurry.gifngo;
+package com.zackmurry.gifngo.converter;
+
+import com.zackmurry.gifngo.models.Frame;
 
 import java.awt.*;
-import java.awt.image.BufferedImage;
 import java.io.OutputStream;
 import java.util.List;
 
@@ -38,7 +39,7 @@ public interface VideoProducer {
     void setDisposalMethod(int disposalMethod);
     int getDisposalMethod();
 
-    void setFrames(List<Frame> frames);
+    void setFrames(List<com.zackmurry.gifngo.models.Frame> frames);
     List<Frame> getFrames();
 
     void setOutputStream(OutputStream out);

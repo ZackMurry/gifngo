@@ -1,4 +1,4 @@
-package com.zackmurry.gifngo;
+package com.zackmurry.gifngo.converter.algorithms;
 
 // ==============================================================================
 // Adapted from Jef Poskanzer's Java port by way of J. M. G. Elliott.
@@ -8,15 +8,15 @@ package com.zackmurry.gifngo;
 import java.io.IOException;
 import java.io.OutputStream;
 
-class LZWEncoder {
+public class LZWEncoder {
 
     private static final int EOF = -1;
 
-    private int imgW, imgH;
+    private final int imgW, imgH;
 
-    private byte[] pixAry;
+    private final byte[] pixAry;
 
-    private int initCodeSize;
+    private final int initCodeSize;
 
     private int remaining;
 
@@ -101,7 +101,7 @@ class LZWEncoder {
 
     int cur_bits = 0;
 
-    int masks[] = { 0x0000, 0x0001, 0x0003, 0x0007, 0x000F, 0x001F, 0x003F, 0x007F, 0x00FF, 0x01FF,
+    private static final int[] masks = { 0x0000, 0x0001, 0x0003, 0x0007, 0x000F, 0x001F, 0x003F, 0x007F, 0x00FF, 0x01FF,
             0x03FF, 0x07FF, 0x0FFF, 0x1FFF, 0x3FFF, 0x7FFF, 0xFFFF };
 
     // Number of characters so far in this 'packet'
@@ -120,7 +120,7 @@ class LZWEncoder {
 
     // Add a character to the end of the current packet, and if it is 254
     // characters, flush the packet to disk.
-    void char_out(byte c, OutputStream outs) throws IOException {
+    private void char_out(byte c, OutputStream outs) throws IOException {
         accum[a_count++] = c;
         if (a_count >= 254)
             flush_char(outs);
@@ -129,7 +129,7 @@ class LZWEncoder {
     // Clear out the hash table
 
     // table clear for block compress
-    void cl_block(OutputStream outs) throws IOException {
+    private void cl_block(OutputStream outs) throws IOException {
         cl_hash(hsize);
         free_ent = ClearCode + 2;
         clear_flg = true;
@@ -138,12 +138,12 @@ class LZWEncoder {
     }
 
     // reset code table
-    void cl_hash(int hsize) {
+    private void cl_hash(int hsize) {
         for (int i = 0; i < hsize; ++i)
             htab[i] = -1;
     }
 
-    void compress(int init_bits, OutputStream outs) throws IOException {
+    private void compress(int init_bits, OutputStream outs) throws IOException {
         int fcode;
         int i /* = 0 */;
         int c;
@@ -214,7 +214,7 @@ class LZWEncoder {
     }
 
     // ----------------------------------------------------------------------------
-    void encode(OutputStream os) throws IOException {
+    public void encode(OutputStream os) throws IOException {
         os.write(initCodeSize); // write "initial code size" byte
 
         remaining = imgW * imgH; // reset navigation variables
@@ -226,7 +226,7 @@ class LZWEncoder {
     }
 
     // Flush the packet to disk, and reset the accumulator
-    void flush_char(OutputStream outs) throws IOException {
+    private void flush_char(OutputStream outs) throws IOException {
         if (a_count > 0) {
             outs.write(a_count);
             outs.write(accum, 0, a_count);
@@ -252,7 +252,7 @@ class LZWEncoder {
         return pix & 0xff;
     }
 
-    void output(int code, OutputStream outs) throws IOException {
+    private void output(int code, OutputStream outs) throws IOException {
         cur_accum &= masks[cur_bits];
 
         if (cur_bits > 0)

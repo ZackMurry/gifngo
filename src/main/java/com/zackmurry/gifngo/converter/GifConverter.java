@@ -1,5 +1,9 @@
-package com.zackmurry.gifngo;
+package com.zackmurry.gifngo.converter;
 
+import com.zackmurry.gifngo.Constants;
+import com.zackmurry.gifngo.models.Frame;
+import com.zackmurry.gifngo.converter.algorithms.LZWEncoder;
+import com.zackmurry.gifngo.converter.algorithms.NeuQuant;
 import lombok.Getter;
 import lombok.Setter;
 import org.slf4j.Logger;
@@ -18,9 +22,9 @@ import java.util.List;
  */
 public final class GifConverter implements VideoProducer {
 
-    public static final double DEFAULT_FRAMES_PER_SECOND = 24;
+    public static final double DEFAULT_FRAMES_PER_SECOND = Constants.DEFAULT_FPS;
 
-    private final Logger logger = LoggerFactory.getLogger(GifConverter.class);
+    private static final Logger logger = LoggerFactory.getLogger(GifConverter.class);
 
     @Getter @Setter
     private List<Frame> frames;
@@ -331,6 +335,7 @@ public final class GifConverter implements VideoProducer {
     }
 
     /**
+     * todo: add option to not stabilize frame rate (use base frame rate for every frame, which is what this method does)
      * see http://www.matthewflickinger.com/lab/whatsinagif/bits_and_bytes.asp#graphics_control_extension_block
      * and https://www.w3.org/Graphics/GIF/spec-gif89a.txt at 25
      */

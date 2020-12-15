@@ -1,12 +1,16 @@
-package com.zackmurry.gifngo;
+package com.zackmurry.gifngo.recorder;
 
+import com.zackmurry.gifngo.models.Frame;
+import com.zackmurry.gifngo.converter.GifConverter;
+import com.zackmurry.gifngo.converter.GifConverterBuilder;
+import com.zackmurry.gifngo.models.ImageDimension;
+import com.zackmurry.gifngo.models.ImageResizer;
 import lombok.Getter;
 import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.imageio.ImageIO;
-import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
