@@ -46,11 +46,13 @@ public class Main {
             recorder.setOutputDimensions(outputDimensions);
         } catch (IllegalArgumentException e) {
             logger.warn(e.getMessage());
-            logger.info("Defaulting output resolution to 960x540");
+            logger.info("Defaulting output resolution to {}.", Constants.DEFAULT_RESOLUTION);
         }
 
+        KeyStroke key = CommandLineArguments.parseKey(cla.getKey());
+
         Provider provider = Provider.getCurrentProvider(false);
-        provider.register(KeyStroke.getKeyStroke(KeyEvent.VK_F7, InputEvent.SHIFT_DOWN_MASK, false), hotkey -> recorder.toggleRecording());
+        provider.register(key, hotkey -> recorder.toggleRecording());
         logger.info("Listening for commands...");
     }
 

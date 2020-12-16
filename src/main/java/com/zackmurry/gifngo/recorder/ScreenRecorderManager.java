@@ -1,5 +1,6 @@
 package com.zackmurry.gifngo.recorder;
 
+import com.zackmurry.gifngo.Constants;
 import com.zackmurry.gifngo.models.Frame;
 import com.zackmurry.gifngo.converter.GifConverter;
 import com.zackmurry.gifngo.converter.GifConverterBuilder;
@@ -45,13 +46,10 @@ public class ScreenRecorderManager {
     @Getter
     private int framesPerSecond = 24;
 
-    private int timeBetweenCapturesMs = 1000 / framesPerSecond;
+    private int timeBetweenCapturesMs = (int) Math.round(1000d / framesPerSecond);
 
     // the time that each individual thread should wait between captures
     private int timeBetweenThreadCaptures;
-
-    private final String captureFolderName = "captures";
-    File capturesFolder = new File(captureFolderName);
 
     @Getter @Setter
     private double strictFps = -1;
@@ -69,29 +67,25 @@ public class ScreenRecorderManager {
     private boolean singleRecording = false;
 
     @Getter @Setter
-    private ImageDimension outputDimensions = new ImageDimension(960, 540);
+    private ImageDimension outputDimensions = ImageDimension.fromString(Constants.DEFAULT_RESOLUTION);
 
     private final ArrayList<Frame> captures = new ArrayList<>();
     private final ArrayList<ScreenRecorder> screenRecorders = new ArrayList<>();
     private long recordStartTime;
-    private int threadCount;
+    private final int threadCount;
 
     public ScreenRecorderManager() {
         this(1);
     }
 
     public ScreenRecorderManager(int threadCount) {
+        if (threadCount <= 0) {
+            logger.error("Thread count must be greater than 0.");
+            throw new IllegalArgumentException("Thread count must be greater than 0.");
+        }
         this.threadCount = threadCount;
         logger.debug("Set to record on {} threads.", threadCount);
         this.timeBetweenThreadCaptures = timeBetweenCapturesMs * threadCount;
-        if (!capturesFolder.exists()) {
-            if (!capturesFolder.mkdir()) {
-                logger.error("Error initializing: captures folder could not be created.");
-            }
-        } else {
-            // if the folder for the images exists, clear the images
-            clearCapturesFolder();
-        }
     }
 
     private void saveImageToCaptures(BufferedImage image, String fileName) throws IOException {
@@ -125,7 +119,7 @@ public class ScreenRecorderManager {
         logger.info("Stopped recording.");
         recording = false;
 
-        List<List<Frame>> separatedCaptures = new ArrayList<>();
+        final List<List<Frame>> separatedCaptures = new ArrayList<>();
         for (ScreenRecorder recorder : screenRecorders) {
             separatedCaptures.add(recorder.stopRecording());
         }
@@ -138,11 +132,10 @@ public class ScreenRecorderManager {
             }
         }
 
-        // todo adjust export frame rate to real frame rate
-        double secondsRecorded = (System.currentTimeMillis() - recordStartTime) / 1000d;
-        double realFramesPerSecond = captures.size() / secondsRecorded;
+        final double secondsRecorded = (System.currentTimeMillis() - recordStartTime) / 1000d;
+        final double realFramesPerSecond = captures.size() / secondsRecorded;
         logger.debug("Recorded for {} seconds at {} frames per second. Recorded at {} real frames per second.", secondsRecorded, framesPerSecond, realFramesPerSecond);
-        double absStrictFps = Math.abs(strictFps);
+        final double absStrictFps = Math.abs(strictFps);
         if (strictFps != 0 && (realFramesPerSecond - absStrictFps > framesPerSecond || realFramesPerSecond + absStrictFps < framesPerSecond)) {
             if (strictFps > 0) {
                 logger.error("Recording failed: expected {} +/- {} frames per second, but got {} frames per second.", framesPerSecond, strictFps, realFramesPerSecond);
@@ -192,17 +185,6 @@ public class ScreenRecorderManager {
             stopRecording();
         } else {
             startRecording();
-        }
-    }
-
-    private void clearCapturesFolder() {
-        File[] captures = capturesFolder.listFiles();
-        if (captures == null) {
-            logger.error("ERROR: Captures should not be null");
-            return;
-        }
-        for (File f : captures) {
-            f.delete();
         }
     }
 
