@@ -27,6 +27,10 @@ public class Main {
             jCommander.usage();
             return;
         }
+        if (cla.isInit()) {
+            PathInitializer.initialize();
+            return;
+        }
         if (!cla.isDebug()) {
             ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
             root.setLevel(Level.INFO);

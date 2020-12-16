@@ -34,4 +34,7 @@ public class CommandLineArguments {
     @Parameter(names = {"--resolution", "-res"}, description = "Set the output resolution. Should be in the format WIDTHxHEIGHT, where WIDTH and HEIGHT are positive integers.")
     private String resolution = Constants.DEFAULT_RESOLUTION;
 
+    @Parameter(names = {"--init", "-i"}, description = "Automatically allow using a \"gifngo\" command anywhere by updating your path.")
+    private boolean init = false;
+
 }
