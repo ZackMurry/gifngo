@@ -12,8 +12,7 @@ import org.slf4j.LoggerFactory;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.util.List;
 
 /**
@@ -67,11 +66,6 @@ public final class GifConverter implements VideoProducer {
     @Getter @Setter
     private int disposalMethod = -1;
 
-    // delay between frames in hundredths of a second
-    @Getter @Setter
-    private int frameDelay = (int) Math.round(100 / DEFAULT_FRAMES_PER_SECOND);
-
-
     private boolean encounteredError;
     private byte[] colorTable;
     private int colorDepth; // number of bit planes
@@ -93,6 +87,11 @@ public final class GifConverter implements VideoProducer {
     public GifConverter(List<Frame> frames, OutputStream outputStream) {
         this.frames = frames;
         this.outputStream = outputStream;
+    }
+
+    public GifConverter(List<Frame> frames, String outputFileName) throws FileNotFoundException {
+        this.frames = frames;
+        this.outputStream = new BufferedOutputStream(new FileOutputStream(outputFileName));
     }
 
     /**
@@ -335,59 +334,6 @@ public final class GifConverter implements VideoProducer {
     }
 
     /**
-     * todo: add option to not stabilize frame rate (use base frame rate for every frame, which is what this method does)
-     * see http://www.matthewflickinger.com/lab/whatsinagif/bits_and_bytes.asp#graphics_control_extension_block
-     * and https://www.w3.org/Graphics/GIF/spec-gif89a.txt at 25
-     */
-    private void writeGraphicControlExt() throws IOException {
-        // write extension header
-        outputStream.write(0x21);
-
-        // graphics control label
-        outputStream.write(0xf9);
-
-        // block size
-        outputStream.write(4);
-
-        int transparentFlag;
-        int disposalBits;
-
-        if (transparentColor == null) {
-            transparentFlag = 0;
-            disposalBits = 0; // dispose = no action
-        } else {
-            transparentFlag = 1;
-            disposalBits = 2;
-        }
-
-        // if disposal method is not set to default
-        if (disposalMethod >= 0) {
-            // only take last 3 bits of disposalMethod
-            disposalBits = disposalMethod & 0b111;
-        }
-
-        // left shift disposalBits by two to make the bit packing easier.
-        // the reason this works is that there are two bits of information stored to the right of the disposalBits included in this byte
-        // so we can left shift it by two to leave room for them during the bitwise OR
-        disposalBits <<= 2;
-
-        outputStream.write(0 | // bits 1-3 are reserved
-                disposalBits | // bits 4-6 are for the disposal method
-                0 | // bit 7 is for a user input flag which we aren't using
-                transparentFlag); // bit 8 is for a flag for a transparent color
-
-        // write delay between frames
-        // todo this could be set to account for variations in frame rate
-        // for example, if a n frames were skipped before this one, it could be played for (n + 1) times as long to compensate.
-        // this would probably involve wrapping each frame in an object that contains the time (could be absolute or relative to the recording start)
-        // and then iterating through them to find gaps in frames and compensating through them like that.
-        writeShort(frameDelay);
-
-        outputStream.write(transparentIndex);
-        outputStream.write(0); // terminate block
-    }
-
-    /**
      * see http://www.matthewflickinger.com/lab/whatsinagif/bits_and_bytes.asp#graphics_control_extension_block
      * and https://www.w3.org/Graphics/GIF/spec-gif89a.txt at 25
      */
@@ -468,16 +414,6 @@ public final class GifConverter implements VideoProducer {
     }
 
     @Override
-    public void setFrameRate(double fps) {
-        if (fps <= 0) {
-            logger.warn("The frames per second of a GifConverter should always be greater than 0.");
-            encounteredError = true;
-            return;
-        }
-        this.frameDelay = (int) Math.round(100 / fps);
-    }
-
-    @Override
     public boolean getUseGlobalColorTable() {
         return useGlobalColorTable;
     }
@@ -485,6 +421,11 @@ public final class GifConverter implements VideoProducer {
     @Override
     public boolean getShouldCloseStream() {
         return shouldCloseStream;
+    }
+
+    @Override
+    public void setOutputFile(String fileName) throws FileNotFoundException {
+        setOutputStream(new BufferedOutputStream(new FileOutputStream(fileName)));
     }
 
     @Override
@@ -504,7 +445,6 @@ public final class GifConverter implements VideoProducer {
         clone.setQuantizationSample(quantizationSample);
         clone.setTransparentColor(transparentColor);
         clone.setShouldCloseStream(shouldCloseStream);
-        clone.setFrameDelay(frameDelay);
         clone.setDisposalMethod(disposalMethod);
         clone.setUseGlobalColorTable(useGlobalColorTable);
         return clone;

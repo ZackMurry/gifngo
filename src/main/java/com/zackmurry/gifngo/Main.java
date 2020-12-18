@@ -9,8 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
 
 public class Main {
 
@@ -53,6 +51,13 @@ public class Main {
 
         Provider provider = Provider.getCurrentProvider(false);
         provider.register(key, hotkey -> recorder.toggleRecording());
+
+        if (!cla.getWaitForBuild().isEmpty()) {
+            recorder.setWaitForBuild(true);
+            KeyStroke buildKey = CommandLineArguments.parseKey(cla.getWaitForBuild());
+            provider.register(buildKey, hotKey -> recorder.buildGifs());
+        }
+
         logger.info("Listening for commands...");
     }
 

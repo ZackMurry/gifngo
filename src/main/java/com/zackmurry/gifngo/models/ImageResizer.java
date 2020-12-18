@@ -16,7 +16,6 @@ public class ImageResizer {
         Graphics2D g2d = bufferedImage.createGraphics();
         g2d.drawImage(resizedImg, 0, 0, null);
         g2d.dispose();
-
         return bufferedImage;
     }
 

@@ -14,3 +14,5 @@ buildNumber.properties
 /.idea/tasks.xml
 /.idea/vcs.xml
 /.idea/dictionaries/
+
+captures/

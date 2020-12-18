@@ -30,6 +30,13 @@ public class GifConverterBuilder {
         this.gifConverter.setOutputStream(os);
     }
 
+    /**
+     * must call setOutputStream() on GifConverter
+     */
+    public GifConverterBuilder() {
+
+    }
+
     public GifConverter build() {
         if (!gifConverter.isReady()) {
             logger.error("Error finishing GifConverter build: GifConverter needs a list of frames, the fps it needs to record at (or a frame delay), and an OutputStream. One or more of these are not present.");
@@ -76,20 +83,6 @@ public class GifConverterBuilder {
     public GifConverterBuilder withDimensions(Dimension dimensions) {
         this.gifConverter.setWidth((int) dimensions.getWidth());
         this.gifConverter.setHeight((int) dimensions.getHeight());
-        return this;
-    }
-
-    public GifConverterBuilder withFrameRate(double fps) {
-        if (fps <= 0d) {
-        logger.warn("Frames per second should not be less than or equal to zero. Reverting to default for frames per second ({}).", GifConverter.DEFAULT_FRAMES_PER_SECOND);
-            this.gifConverter.setFrameDelay((int) Math.round(100 / GifConverter.DEFAULT_FRAMES_PER_SECOND));
-        }
-        this.gifConverter.setFrameDelay((int) Math.round(100 / fps));
-        return this;
-    }
-
-    public GifConverterBuilder withFrameDelay(int frameDelay) {
-        this.gifConverter.setFrameDelay(frameDelay);
         return this;
     }
 

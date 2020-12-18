@@ -3,6 +3,8 @@ package com.zackmurry.gifngo.converter;
 import com.zackmurry.gifngo.models.Frame;
 
 import java.awt.*;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.OutputStream;
 import java.util.List;
 
@@ -10,16 +12,11 @@ public interface VideoProducer {
 
     boolean process();
 
-    void setFrameRate(double fps);
-
     void setWidth(int width);
     int getWidth();
 
     void setHeight(int height);
     int getHeight();
-
-    void setFrameDelay(int delay);
-    int getFrameDelay();
 
     void setUseGlobalColorTable(boolean useGlobalColorTable);
     boolean getUseGlobalColorTable();
@@ -43,6 +40,7 @@ public interface VideoProducer {
     List<Frame> getFrames();
 
     void setOutputStream(OutputStream out);
+    void setOutputFile(String fileName) throws FileNotFoundException;
     OutputStream getOutputStream();
 
     boolean isReady();

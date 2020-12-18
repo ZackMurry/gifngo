@@ -12,26 +12,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.imageio.ImageIO;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
 
 /**
- * class that takes screenshots and delivers them to a GIF builder
+ * class that orders ScreenRecorders to take screenshots and then delivers them to a GifConverter
  *
- * still haven't decided if this should save the images as jpegs and then call another class to orchestrate a gif builder or not.
- * the main consideration is heap space, which in tests has ran out (presumably due to the images in the captures array list being stored in memory
- * instead of on the hard drive. thus, a good fix would be to store them in the captures folder, but there is more thought that needs to be put into that.
- * a good file structure would probably separate GIFs into their own folders in the captures directory, as to make it clear to a parser which photos belong where,
- * with the order determined by the names of the files, which would just be System.currentTimeMillis() at each respective time, so they could just be numerically
- * sorted.
- *
- * something else that needs to happen is the capability for recording multiple gifs without restarting the program. this is pretty much a necessity and is fairly
- * incompatible with the current set up, but could be implemented pretty easily if the photos were stored in the hard drive instead of in memory.
- *
- * another useful feature would be the ability to delay building GIFs until the user is ready for it, as it'd be pretty inconvenient to be running
+ * todo allow for delay before building gifs until the user is ready for it, as it'd be pretty inconvenient to be running
  * a quantization algorithm while the user is in a match or something
  *
  */
@@ -69,10 +60,14 @@ public class ScreenRecorderManager {
     @Getter @Setter
     private ImageDimension outputDimensions = ImageDimension.fromString(Constants.DEFAULT_RESOLUTION);
 
-    private final ArrayList<Frame> captures = new ArrayList<>();
+    @Getter @Setter
+    private boolean waitForBuild;
+
     private final ArrayList<ScreenRecorder> screenRecorders = new ArrayList<>();
     private long recordStartTime;
     private final int threadCount;
+
+    private static final File capturesFolder = new File("captures");
 
     public ScreenRecorderManager() {
         this(1);
@@ -124,6 +119,7 @@ public class ScreenRecorderManager {
             separatedCaptures.add(recorder.stopRecording());
         }
 
+        final ArrayList<Frame> captures = new ArrayList<>();
         for (int i = 0; i < separatedCaptures.get(screenRecorders.size() - 1).size(); i++) {
             for (List<Frame> caps : separatedCaptures) {
                 if (i < caps.size()) {
@@ -145,16 +141,16 @@ public class ScreenRecorderManager {
             }
         }
 
+        if (waitForBuild) {
+            // add images to folder in captures folder
+            addGifImagesToCapturesFolder(String.valueOf(System.currentTimeMillis()), captures);
+            return;
+        }
+        captures.forEach(capture -> capture.setImage(ImageResizer.resize(capture.getImage(), outputDimensions)));
+
         logger.info("Building GIF...");
         
-        String outputPath;
-        String gifFileName = (outputFileName != null ? outputFileName : System.currentTimeMillis()) + ".gif";
-        if (saveToDownloadsFolder) {
-            // todo probably have a prettier default file name
-            outputPath = DOWNLOADS_FOLDER_PATH + File.separator + gifFileName;
-        } else {
-            outputPath = gifFileName;
-        }
+        String outputPath = generateOutputFilePath();
         
         GifConverterBuilder gifConverterBuilder;
         try {
@@ -165,19 +161,58 @@ public class ScreenRecorderManager {
         }
         logger.info("Processing {} captures...", captures.size());
 
-        captures.forEach(capture -> capture.setImage(ImageResizer.resize(capture.getImage(), outputDimensions)));
-
         GifConverter gifConverter = gifConverterBuilder
-                .withFrameRate(framesPerSecond)
                 .withFrames(captures)
                 .build();
         gifConverter.process();
         logger.info("GIF successfully created. Saved to {}.", outputPath);
 
-        captures.clear();
         if (singleRecording) {
             System.exit(0);
         }
+    }
+
+    private String generateOutputFilePath() {
+        final String gifFileName = (outputFileName != null ? outputFileName : System.currentTimeMillis()) + ".gif";
+        if (saveToDownloadsFolder) {
+            return DOWNLOADS_FOLDER_PATH + File.separator + gifFileName;
+        } else {
+            return gifFileName;
+        }
+    }
+
+    private void addGifImagesToCapturesFolder(String folderName, List<Frame> images) {
+        if (!capturesFolder.exists()) {
+            if (!capturesFolder.mkdir()) {
+                logger.error("Failed to create captures folder. Aborting...");
+                System.exit(1);
+            }
+        }
+
+        final File gifFolder = new File(capturesFolder.getPath() + "\\" + folderName);
+        if (!gifFolder.mkdir()) {
+            logger.error("Failed to create folder for gif images. Gif save failed.");
+            return;
+        }
+        logger.debug("Saving {} image{} to {}...", images.size(), images.size() != 1 ? "s" : "", gifFolder.getAbsolutePath());
+
+        try {
+            for (Frame image : images) {
+                boolean wrote = ImageIO.write(image.getImage(), "jpeg", new File(gifFolder.getPath() + "\\" + image.getTimeSinceStart() + ".jpeg"));
+                if (!wrote) {
+                    logger.warn("Wrote is false");
+                }
+            }
+        } catch (IOException e) {
+            logger.error("Error saving images to disk. Deleting the folder for that gif and aborting...");
+            if (gifFolder.delete()) {
+                logger.debug("Successfully deleted gif folder.");
+            } else {
+                logger.warn("Error deleting folder {}. This may cause unexpected behavior after starting the program again. It is recommended to delete this folder.", gifFolder);
+            }
+            System.exit(1);
+        }
+        logger.info("Gif files saved.");
     }
 
     public void toggleRecording() {
@@ -199,6 +234,97 @@ public class ScreenRecorderManager {
         framesPerSecond = fps;
         timeBetweenCapturesMs = 1000 / fps;
         timeBetweenThreadCaptures = timeBetweenCapturesMs * threadCount;
+    }
+
+    /**
+     * deletes a directory with only files insides (i.e., no sub-directories)
+     * @param f file to delete
+     * @return boolean representing success
+     */
+    private boolean deleteFileDirectory(File f) {
+        File[] files = f.listFiles();
+        if (files == null) {
+            return f.delete();
+        }
+        for (File file : files) {
+            if (!file.delete()) {
+                return false;
+            }
+        }
+        return f.delete();
+    }
+
+    public void buildGifs() {
+        logger.info("Building gifs...");
+        if (!waitForBuild) {
+            logger.debug("Received a call to buildGifs() with waitForBuild off.");
+            return;
+        }
+
+        if (!capturesFolder.exists()) {
+            logger.info("No gifs to build.");
+            return;
+        }
+
+
+        final File[] gifFolders = capturesFolder.listFiles();
+
+        if (gifFolders == null) {
+            logger.warn("No folders for gifs found. Not building any gifs.");
+            return;
+        }
+
+        // todo current problem: OutOfMemoryError :(. could maybe solve by putting frames in memory in groups of like 10
+        for (File gifFolder : gifFolders) {
+            final File[] imageFiles = gifFolder.listFiles();
+
+            if (imageFiles == null) {
+                logger.warn("A gif folder is empty. Skipping...");
+                if (!deleteFileDirectory(gifFolder)) {
+                    logger.warn("Failed to delete folder for a gif. Location: {}", gifFolder.getAbsolutePath());
+                }
+                continue;
+            }
+
+            final ArrayList<Frame> frames = new ArrayList<>();
+            logger.debug("Processing {} images...", imageFiles.length);
+            for (File imageFile : imageFiles) {
+                BufferedImage image;
+                int imageName;
+                try {
+                    image = ImageIO.read(imageFile);
+                    // substring file name to remove .jpeg at the end
+                    String fileName = imageFile.getName().substring(0, imageFile.getName().length() - 5);
+                    imageName = Integer.parseInt(fileName);
+                } catch (IOException | NumberFormatException e) {
+                    logger.error("Exception occurred when reading an image of a gif. Skipping image...");
+                    continue;
+                }
+                frames.add(new Frame(image, imageName));
+            }
+
+            frames.forEach(capture -> capture.setImage(ImageResizer.resize(capture.getImage(), outputDimensions)));
+            frames.sort(Comparator.comparingInt(Frame::getTimeSinceStart));
+
+            final String filePath = generateOutputFilePath();
+            try {
+                boolean builtSuccessfully = new GifConverter(frames, filePath).process();
+                if (!builtSuccessfully) {
+                    logger.warn("Problem occurred while building gif. It could possibly still work; location: {}", filePath);
+                } else {
+                    logger.info("Successfully created a gif located at {}", filePath);
+                }
+            } catch (IOException e) {
+                logger.error("Error constructing output stream to build gif to:", e);
+            }
+
+            // delete folder for gif
+            if (!deleteFileDirectory(gifFolder)) {
+                logger.warn("Could not delete folder {}, which contains the images for a gif. You should delete this manually in order to avoid errors in the future, but this could fix itself after another build.", gifFolder.getAbsolutePath());
+            }
+            logger.debug("Successfully built gif to {}", filePath);
+        }
+        logger.info("All gifs finished building.");
     }
     
 }

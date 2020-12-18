@@ -51,6 +51,10 @@ public class CommandLineArguments {
             "from F1 to F24. For example, to use F9, you can set this value to \"F9\".")
     private String key = "F7_SHIFT";
 
+    @Parameter(names = {"--wait-for-build", "--wait", "-w"}, description = "Set this value if you wish to build the gifs later, rather than building them immediately after recording them. " +
+            "This takes an input of the key that should be pressed to build the gifs (see \"--key\").")
+    private String waitForBuild = "";
+
     // todo add tests for this
     public static KeyStroke parseKey(String k) {
         final String[] parts = k.split("_");
