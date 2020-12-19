@@ -34,6 +34,7 @@ public class PathInitializer {
     }
 
     public static void initialize() {
+        String currentPath = getPathWithPrevInfoErased();
         try {
             if (!createBatchFile()) {
                 return;
@@ -44,7 +45,7 @@ public class PathInitializer {
                 // todo might want to check if path already has /gifngo/bin in it
                 final ProcessBuilder builder = new ProcessBuilder();
                 // todo might not need the semicolon here
-                builder.command("cmd.exe", "/c", "setx", "/M", "PATH", "\"%PATH%;" + GIFNGO_BIN_PATH + "\"");
+                builder.command("cmd.exe", "/c", "setx", "/M", "PATH", "\"" + currentPath + GIFNGO_BIN_PATH + "\"");
                 final Process process = builder.start();
                 StreamGobbler gobbler = new StreamGobbler(process.getInputStream(), System.out::println);
                 gobbler.run();
@@ -53,21 +54,59 @@ public class PathInitializer {
                 logger.error("Operating system not supported for this command. You'll have to update your PATH to include " + GIFNGO_BIN_PATH + " manually.");
             }
 
-
         } catch (IOException e) {
             e.printStackTrace();
         }
 
     }
 
+    public static String getPathWithPrevInfoErased() {
+        String currentPath = System.getenv("Path");
+        // backslash heaven incoming
+        final String escapedBinPath = GIFNGO_BIN_PATH.replaceAll("\\\\", "\\\\\\\\");
+        currentPath = currentPath.replaceAll(";" + escapedBinPath, "");
+
+        // fixing bad semicolons in path
+        if (currentPath.contains(";;")) {
+            logger.debug("Path contains double-semicolons. Fixing...");
+            StringBuilder builder = new StringBuilder(currentPath);
+            for (int i = 0; i < builder.length() - 1; i++) {
+                if (builder.charAt(i) == ';' && builder.charAt(i + 1) == ';') {
+                    builder.delete(i, i + 1);
+                    i--;
+                }
+            }
+            currentPath = builder.toString();
+        }
+
+        logger.debug("Cleared path: {}", currentPath);
+        return currentPath;
+    }
+
     private static boolean createBatchFile() throws IOException {
         File binDir = new File(GIFNGO_BIN_PATH);
-        if (!binDir.exists()) {
-            logger.debug("Creating bin directory.");
-            binDir.mkdirs();
-        } else {
-            logger.debug("Bin directory already exists.");
+
+        if (binDir.exists()) {
+            logger.debug("Bin directory already exists. Deleting...");
+            File[] binFiles = binDir.listFiles();
+            if (binFiles != null) {
+                for (File binFile : binFiles) {
+                    if (!binFile.delete()) {
+                        logger.warn("Error deleting file in bin: {}", binFile.getAbsolutePath());
+                    }
+                }
+            }
+            if (!binDir.delete()) {
+                logger.error("Error deleting bin directory. Aborting...");
+                return false;
+            }
         }
+        logger.debug("Creating bin directory.");
+        if (!binDir.mkdirs()) {
+            logger.error("Error creating bin directory.");
+            return false;
+        }
+
         final File gifngoBatchFile = new File(GIFNGO_BIN_PATH + "\\gifngo.bat");
         if (!gifngoBatchFile.createNewFile()) {
             logger.warn("The batch file for gifngo already exists. Replacing...");

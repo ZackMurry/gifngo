@@ -375,10 +375,6 @@ public final class GifConverter implements VideoProducer {
                 transparentFlag); // bit 8 is for a flag for a transparent color
 
         // write delay between frames
-        // todo this could be set to account for variations in frame rate
-        // for example, if a n frames were skipped before this one, it could be played for (n + 1) times as long to compensate.
-        // this would probably involve wrapping each frame in an object that contains the time (could be absolute or relative to the recording start)
-        // and then iterating through them to find gaps in frames and compensating through them like that.
         writeShort(time);
 
         outputStream.write(transparentIndex);

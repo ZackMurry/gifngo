@@ -3,7 +3,6 @@ package com.zackmurry.gifngo.recorder;
 import com.zackmurry.gifngo.Constants;
 import com.zackmurry.gifngo.models.Frame;
 import com.zackmurry.gifngo.converter.GifConverter;
-import com.zackmurry.gifngo.converter.GifConverterBuilder;
 import com.zackmurry.gifngo.models.ImageDimension;
 import com.zackmurry.gifngo.models.ImageResizer;
 import lombok.Getter;
@@ -12,7 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.imageio.ImageIO;
-import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -21,10 +19,6 @@ import java.util.List;
 
 /**
  * class that orders ScreenRecorders to take screenshots and then delivers them to a GifConverter
- *
- * todo allow for delay before building gifs until the user is ready for it, as it'd be pretty inconvenient to be running
- * a quantization algorithm while the user is in a match or something
- *
  */
 public class ScreenRecorderManager {
 
@@ -131,13 +125,14 @@ public class ScreenRecorderManager {
         final double secondsRecorded = (System.currentTimeMillis() - recordStartTime) / 1000d;
         final double realFramesPerSecond = captures.size() / secondsRecorded;
         logger.debug("Recorded for {} seconds at {} frames per second. Recorded at {} real frames per second.", secondsRecorded, framesPerSecond, realFramesPerSecond);
+
         final double absStrictFps = Math.abs(strictFps);
         if (strictFps != 0 && (realFramesPerSecond - absStrictFps > framesPerSecond || realFramesPerSecond + absStrictFps < framesPerSecond)) {
             if (strictFps > 0) {
-                logger.error("Recording failed: expected {} +/- {} frames per second, but got {} frames per second.", framesPerSecond, strictFps, realFramesPerSecond);
+                logger.error("Recording failed: expected {} +/- {} frames per second, but got {} frames per second.", framesPerSecond, absStrictFps, realFramesPerSecond);
                 return;
             } else {
-                logger.warn("Frames per second is more than {} away from the desired frame rate ({}). Frame rate: {}. Continuing...", -strictFps, framesPerSecond, realFramesPerSecond);
+                logger.warn("Frames per second is more than {} away from the desired frame rate ({}). Frame rate: {}. Continuing...", absStrictFps, framesPerSecond, realFramesPerSecond);
             }
         }
 
@@ -146,24 +141,21 @@ public class ScreenRecorderManager {
             addGifImagesToCapturesFolder(String.valueOf(System.currentTimeMillis()), captures);
             return;
         }
+
         captures.forEach(capture -> capture.setImage(ImageResizer.resize(capture.getImage(), outputDimensions)));
 
         logger.info("Building GIF...");
         
         String outputPath = generateOutputFilePath();
         
-        GifConverterBuilder gifConverterBuilder;
+        GifConverter gifConverter;
         try {
-            gifConverterBuilder = new GifConverterBuilder(outputPath);
+            gifConverter = new GifConverter(captures, outputPath);
         } catch (IOException e) {
             e.printStackTrace();
             return;
         }
         logger.info("Processing {} captures...", captures.size());
-
-        GifConverter gifConverter = gifConverterBuilder
-                .withFrames(captures)
-                .build();
         gifConverter.process();
         logger.info("GIF successfully created. Saved to {}.", outputPath);
 
@@ -274,7 +266,7 @@ public class ScreenRecorderManager {
             return;
         }
 
-        // todo current problem: OutOfMemoryError :(. could maybe solve by putting frames in memory in groups of like 10
+        // todo this might create an OutOfMemoryError. this could be changed to get one image at a time and pass them to the GifConverter, which would avoid using a ton of memory
         for (File gifFolder : gifFolders) {
             final File[] imageFiles = gifFolder.listFiles();
 
