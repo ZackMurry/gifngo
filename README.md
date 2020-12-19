@@ -1,4 +1,3 @@
-# gifngo
 ![gifngo – A tool to create gifs in the command line](banner.svg)
 
 # installation
