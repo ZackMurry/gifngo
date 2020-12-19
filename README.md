@@ -25,6 +25,10 @@ To view the list of commands, you can use the option `help`.
 ### frame rate
 You can set the frame rate to record at by using the option `--fps [value]` or `-f [value]`. The default value is 18.
 
+
+### change activation key
+In order to change the hotkey which starts recording, you can use the option `--key [value]` or `-k [value]`, where `[value]` is in the format `KEY_MODIFIER`. The `KEY` should be one of the function keys, e.g. F7. The `MODIFIER` value can be `SHIFT`, `CONTROL`, `ALT`, or `NONE`. The default value is `F7_SHIFT`.
+
 ### wait before build
 If your computer slows down significantly during the building of the gifs, you may want to delay the building of the gifs until a good time.
 You can use the option `--wait-for-build [value]` or `-w [value]` to wait until you press a specific key before the gif-building process starts.
@@ -48,6 +52,3 @@ If you'd like to end the program after recording one gif, you can use the option
 
 ### debug
 If you'd like to enable debug mode, you can use the option `--debug` or `-d`.
-
-### change activation key
-In order to change the hotkey which starts recording, you can use the option `--key [value]` or `-k [value]`, where `[value]` is in the format `KEY_MODIFIER`. The `KEY` should be one of the function keys, e.g. F7. The `MODIFIER` value can be `SHIFT`, `CONTROL`, `ALT`, or `NONE`. The default value is `F7_SHIFT`.
