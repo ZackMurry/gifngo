@@ -42,9 +42,8 @@ public class PathInitializer {
             String osName = System.getProperty("os.name");
             // todo support other OSs
             if (osName.startsWith("Windows")) {
-                // todo might want to check if path already has /gifngo/bin in it
+                // todo probably want to check if path already has /gifngo/bin in it and then not alter path if that's true
                 final ProcessBuilder builder = new ProcessBuilder();
-                // todo might not need the semicolon here
                 builder.command("cmd.exe", "/c", "setx", "/M", "PATH", "\"" + currentPath + GIFNGO_BIN_PATH + "\"");
                 final Process process = builder.start();
                 StreamGobbler gobbler = new StreamGobbler(process.getInputStream(), System.out::println);
