@@ -46,7 +46,6 @@ public class ScreenRecorder extends Thread {
         }
     }
 
-    // todo save images as files and then load them to convert to gif maybe
     public void run() {
         long recordStartTime = System.currentTimeMillis();
         if (msOffset > 0) {

@@ -1,5 +1,5 @@
 # gifngo
- A lightweight Java screen recording application that allows exporting to gif.
+![gifngo – A tool to create gifs in the command line](banner.svg)
 
 # installation
 First, download the .jar file from the latest release. If you don't have Java installed, you'll need to download it and install it.  

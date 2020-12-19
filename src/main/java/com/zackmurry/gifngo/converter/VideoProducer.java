@@ -3,7 +3,6 @@ package com.zackmurry.gifngo.converter;
 import com.zackmurry.gifngo.models.Frame;
 
 import java.awt.*;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.OutputStream;
 import java.util.List;

@@ -22,6 +22,10 @@ public class Main {
                 .build();
         jCommander.setProgramName("gifngo");
         jCommander.parse(args);
+        if (!cla.isDebug()) {
+            ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
+            root.setLevel(Level.INFO);
+        }
         if (cla.isHelp()) {
             jCommander.usage();
             return;
@@ -29,10 +33,6 @@ public class Main {
         if (cla.isInit()) {
             PathInitializer.initialize();
             return;
-        }
-        if (!cla.isDebug()) {
-            ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
-            root.setLevel(Level.INFO);
         }
         ScreenRecorderManager recorder = new ScreenRecorderManager(cla.getThreadCount());
         recorder.setFramesPerSecond(cla.getFramesPerSecond());
