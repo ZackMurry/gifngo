@@ -14,6 +14,7 @@ public class Main {
 
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
 
+    // todo saving args and using like --args [save name] to load them
     public static void main(String[] args) {
         CommandLineArguments cla = new CommandLineArguments();
         JCommander jCommander = JCommander.newBuilder()

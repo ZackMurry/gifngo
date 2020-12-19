@@ -55,9 +55,17 @@ public class CommandLineArguments {
             "This takes an input of the key that should be pressed to build the gifs (see \"--key\").")
     private String waitForBuild = "";
 
-    // todo add tests for this
+    /**
+     * parses a String into a KeyStroke
+     * @param k a String representing the key. format: <code>F[1-24]_[SHIFT|CONTROL|CTRL|ALT|NONE]</code>.
+     * @throws IllegalArgumentException if <code>k</code> doesn't contain one underscore
+     * @throws IllegalArgumentException if part after the underscore isn't one of: SHIFT, CONTROL, CTRL, ALT, NONE
+     * @throws NumberFormatException if the part after the F and before the underscore isn't an integer
+     * @throws IllegalArgumentException if the F number is less than one or greater than 24
+     * @return a <code>KeyStroke</code> representing the input
+     */
     public static KeyStroke parseKey(String k) {
-        final String[] parts = k.split("_");
+        final String[] parts = k.split("_", -1); // -1 here registers an empty string at the end if there's an underscore at the end
         if (parts.length != 2) {
             throw new IllegalArgumentException("Your key must be in the format [F-KEY]_[SHIFT|CONTROL|ALT|NONE]. Please type \"gifngo help\" to learn more. Your entry doesn't contain one underscore.");
         }
@@ -69,12 +77,12 @@ public class CommandLineArguments {
             logger.error("Your key must be an F-Key and should have an integer value between the 'F' and the underscore.");
             throw e;
         }
-        if (fNum <= 0 || fNum > 24) {
+        if (fNum < 1 || fNum > 24) {
             throw new IllegalArgumentException("Your f value must be between 1 and 24. Entered f value: " + fNum + ".");
         }
 
         // converting to the proper KeyEvent
-        final int keyCode = fNum + (KeyEvent.VK_F1 - 1);
+        final int keyCode = fNum + (fNum <= 12 ? (KeyEvent.VK_F1 - 1) : (KeyEvent.VK_F13 - 13));
 
         int mask = 0;
         // todo use the bitwise OR to combine these, but I don't see the value to the user, and it'd make the input even harder to grasp

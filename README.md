@@ -46,11 +46,11 @@ If you'd like to enable debug mode, you can use the option `--debug` or `-d`.
 ### resolution
 To change the output resolution, use the option `--resolution [value]` or `-res [value]`, where `[value]` is in the format of `WIDTHxHEIGHT`, with `WIDTH` and `HEIGHT` being positive integers. The default output resolution is 480x270.
 
-### change activation key
+### <span id="change-activation-key">change activation key</span>
 In order to change the hotkey which starts recording, you can use the option `--key [value]` or `-k [value]`, where `[value]` is in the format `KEY_MODIFIER`. The `KEY` should be one of the function keys, e.g. F7. The `MODIFIER` value can be `SHIFT`, `CONTROL`, `ALT`, or `NONE`. The default value is `F7_SHIFT`.
 
 ### wait before build
 If your computer slows down significantly during the building of the gifs, you may want to delay the building of the gifs until a good time.
 You can use the option `--wait-for-build [value]` or `-w [value]` to wait until you press a specific key before the gif-building process starts.
-`[value]` should represent the hotkey that will start the building of the gif. This should be one of the function keys, like F8, and be in the format described in the [change activation key](#change-activation-key) option.
+`[value]` should represent the hotkey that will start the building of the gif. This should be one of the function keys, like F8, and be in the format described in the change activation key option.
 The default behavior is to build gifs immediately after recording stops.
