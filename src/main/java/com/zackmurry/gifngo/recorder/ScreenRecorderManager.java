@@ -4,7 +4,6 @@ import com.zackmurry.gifngo.Constants;
 import com.zackmurry.gifngo.models.Frame;
 import com.zackmurry.gifngo.converter.GifConverter;
 import com.zackmurry.gifngo.models.ImageDimension;
-import com.zackmurry.gifngo.models.ImageResizer;
 import lombok.Getter;
 import lombok.Setter;
 import org.slf4j.Logger;

@@ -1,4 +1,6 @@
-package com.zackmurry.gifngo.models;
+package com.zackmurry.gifngo.recorder;
+
+import com.zackmurry.gifngo.models.ImageDimension;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
