@@ -49,7 +49,7 @@ public class CommandLineArguments {
 
     @Parameter(names = {"--key", "-k"}, description = "Sets the key used to start and end recording. Should be entered in the format [F-KEY]_[SHIFT|CONTROL|ALT|NONE]. F-KEY must be a value " +
             "from F1 to F24. For example, to use F9, you can set this value to \"F9\".")
-    private String key = "F7_SHIFT";
+    private String key = "F7_ALT";
 
     @Parameter(names = {"--wait-for-build", "--wait", "-w"}, description = "Set this value if you wish to build the gifs later, rather than building them immediately after recording them. " +
             "This takes an input of the key that should be pressed to build the gifs (see \"--key\").")
