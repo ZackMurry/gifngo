@@ -107,6 +107,7 @@ public class PathInitializer {
         return true;
     }
 
+    // todo doesn't work when a space is in the name
     private static boolean createBashExecutable() throws IOException {
         final File execFile = new File(GIFNGO_BIN_PATH_LINUX + "/gifngo");
         if (execFile.exists()) {
@@ -151,9 +152,15 @@ public class PathInitializer {
             return false;
         }
 
-        final String pathToJar = PathInitializer.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+        final String encodedPathToJar = PathInitializer.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+        String pathToJar = URLDecoder.decode(encodedPathToJar, StandardCharsets.UTF_8);
+        if (!pathToJar.endsWith(".jar")) {
+            logger.error("To initialize, you should run directly from the jar file. Expected location to end with .jar but instead is: {}", pathToJar);
+            return false;
+        }
+        logger.debug("Path to jar: {}", pathToJar);
         final FileWriter fw = new FileWriter(execFile.getAbsolutePath());
-        final String bashString = "#!/usr/bin/env bash\njava -jar " + pathToJar + " \"$@\"";
+        final String bashString = "#!/usr/bin/env bash\njava -jar \"" + pathToJar + "\" \"$@\"";
         fw.write(bashString);
         fw.flush();
         fw.close();
