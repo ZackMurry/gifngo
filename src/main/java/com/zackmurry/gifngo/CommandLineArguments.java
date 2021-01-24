@@ -44,7 +44,7 @@ public class CommandLineArguments {
     @Parameter(names = {"--resolution", "-res"}, description = "Set the output resolution. Should be in the format WIDTHxHEIGHT, where WIDTH and HEIGHT are positive integers.")
     private String resolution = Constants.DEFAULT_RESOLUTION;
 
-    @Parameter(names = {"--init", "-i", "init"}, description = "Automatically allow using a \"gifngo\" command anywhere by updating your path.")
+    @Parameter(names = {"--init", "-i", "init"}, description = "Automatically allow using a \"gifngo\" command anywhere by updating your path. Supports Windows and Linux.")
     private boolean init = false;
 
     @Parameter(names = {"--key", "-k"}, description = "Sets the key used to start and end recording. Should be entered in the format [F-KEY]_[SHIFT|CONTROL|ALT|NONE]. F-KEY must be a value " +

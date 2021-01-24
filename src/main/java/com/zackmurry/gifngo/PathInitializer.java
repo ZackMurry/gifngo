@@ -6,6 +6,13 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Paths;
+import java.nio.file.attribute.FileAttribute;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
+import java.util.Set;
 import java.util.function.Consumer;
 
 public class PathInitializer {
@@ -41,12 +48,10 @@ public class PathInitializer {
     public static void initialize() {
         try {
             String osName = System.getProperty("os.name");
-            // todo support other OSs
             if (osName.startsWith("Windows")) {
                 if (!createBatchFile()) {
                     return;
                 }
-                // todo probably want to check if path already has /gifngo/bin in it and then not alter path if that's true
                 final ProcessBuilder builder = new ProcessBuilder();
                 final String currentPath = getPathWithPrevInfoErased();
                 builder.command("cmd.exe", "/c", "setx", "/M", "PATH", "\"" + currentPath + GIFNGO_BIN_PATH_WINDOWS + "\"");
@@ -103,7 +108,7 @@ public class PathInitializer {
     }
 
     private static boolean createBashExecutable() throws IOException {
-        final File execFile = new File(GIFNGO_BIN_PATH_LINUX + "/gifngo.sh");
+        final File execFile = new File(GIFNGO_BIN_PATH_LINUX + "/gifngo");
         if (execFile.exists()) {
             if (!execFile.delete()) {
                 logger.error("Error deleting {} -- make sure you are in `sudo` mode", execFile.getAbsolutePath());
@@ -113,19 +118,16 @@ public class PathInitializer {
             }
         }
         final File binFile = new File(GIFNGO_BIN_PATH_LINUX);
+        Set<PosixFilePermission> openToUserPermissions = PosixFilePermissions.fromString("rwxrwxrwx");
+        FileAttribute<?> permissions = PosixFilePermissions.asFileAttribute(openToUserPermissions);
         try {
             if (!binFile.exists()) {
-                if (!binFile.mkdirs()) {
-                    logger.error("Error creating bin directory");
-                    return false;
-                }
+                Files.createDirectories(binFile.toPath(), permissions);
             }
-            if (!execFile.createNewFile()) {
-                logger.error("Error creating {}", execFile.getAbsolutePath());
-                return false;
-            }
-        } catch (SecurityException | IOException e) {
+            Files.createFile(execFile.toPath(), permissions);
+        } catch (SecurityException | IOException | InvalidPathException e) {
             logger.error("Error creating {} -- {}", execFile.getAbsolutePath(), e.getMessage());
+            e.printStackTrace();
             return false;
         }
 
@@ -135,8 +137,6 @@ public class PathInitializer {
         fw.write(bashString);
         fw.flush();
         fw.close();
-        // todo shebang not working
-        // todo execute "chmod o=rwx /home/${user}/.gifngo -R" to allow users to execute it
         return true;
     }
 
