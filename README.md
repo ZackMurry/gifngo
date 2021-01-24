@@ -23,7 +23,7 @@ To initialize on Linux, run `sudo java -jar [path to jar] init`. Then, log out o
 This will automatically erase the configuration done by previous installations, so you should be able to do this without issue.
 
 # Usage
-To start recording a gif, run `gifngo` and press SHIFT and F7 on your keyboard at the same time when you are ready to start recording. Press SHIFT and F7 again to stop the recording and save it to your downloads folder.
+To start recording a gif, run `gifngo` and press ALT and F7 on your keyboard at the same time when you are ready to start recording. Press ALT and F7 again to stop the recording and save it to your downloads folder.
 
 ## Configuration
 You can pass arguments into gifngo by appending them to the end of the command which you use to start it. For example, you can type `gifngo help` to see a list of options.  
@@ -38,7 +38,7 @@ This command prints the version of gifngo that is being called.
 You can set the frame rate to record at by using the option `--fps [value]` or `-f [value]`. The default value is 18.
 
 ### Change activation key
-In order to change the hotkey which starts recording, you can use the option `--key [value]` or `-k [value]`, where `[value]` is in the format `KEY_MODIFIER`. The `KEY` should be one of the function keys, e.g. F7. The `MODIFIER` value can be `SHIFT`, `CONTROL`, `ALT`, or `NONE`. The default value is `F7_SHIFT`.
+In order to change the hotkey which starts recording, you can use the option `--key [value]` or `-k [value]`, where `[value]` is in the format `KEY_MODIFIER`. The `KEY` should be one of the function keys, e.g. F7. The `MODIFIER` value can be `SHIFT`, `CONTROL`, `ALT`, or `NONE`. The default value is `F7_ALT`.
 
 ### Wait before build
 If your computer slows down significantly during the building of the gifs, you may want to delay the building of the gifs until a good time.
