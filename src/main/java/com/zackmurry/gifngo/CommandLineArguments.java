@@ -9,6 +9,8 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.io.IOException;
+import java.util.Properties;
 
 // todo allow for using previous arguments
 
@@ -54,6 +56,21 @@ public class CommandLineArguments {
     @Parameter(names = {"--wait-for-build", "--wait", "-w"}, description = "Set this value if you wish to build the gifs later, rather than building them immediately after recording them. " +
             "This takes an input of the key that should be pressed to build the gifs (see \"--key\").")
     private String waitForBuild = "";
+
+    @Parameter(names = {"--version", "-v"}, description = "Print the version of gifngo installed")
+    private boolean version = false;
+
+    public String getVersionNumber() {
+        final Properties properties = new Properties();
+        try {
+            properties.load(this.getClass().getClassLoader().getResourceAsStream("project.properties"));
+            return properties.getProperty("version");
+        } catch (IOException e) {
+            logger.warn("Error retrieving gifngo version");
+            e.printStackTrace();
+            return "ERROR";
+        }
+    }
 
     /**
      * parses a String into a KeyStroke

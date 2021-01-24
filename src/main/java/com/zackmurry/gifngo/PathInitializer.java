@@ -118,12 +118,32 @@ public class PathInitializer {
             }
         }
         final File binFile = new File(GIFNGO_BIN_PATH_LINUX);
+        if (binFile.exists()) {
+            final File[] children = binFile.listFiles();
+            if (children == null) {
+                logger.error("Error deleting files in /bin");
+                return false;
+            }
+            for (File child : children) {
+                if (child.isFile()) {
+                    if (!child.delete()) {
+                        logger.warn("Unable to delete {} -- this may cause a conflict in your path", child.getAbsolutePath());
+                    }
+                } else {
+                    logger.error("Encountered directory in {}", binFile.getAbsolutePath());
+                    return false;
+                }
+            }
+            if (!binFile.delete()) {
+                logger.error("Unable to delete previous bin file -- location: {}", binFile.getAbsolutePath());
+                return false;
+            }
+            logger.debug("Deleted bin file from previous initialization");
+        }
         Set<PosixFilePermission> openToUserPermissions = PosixFilePermissions.fromString("rwxrwxrwx");
         FileAttribute<?> permissions = PosixFilePermissions.asFileAttribute(openToUserPermissions);
         try {
-            if (!binFile.exists()) {
-                Files.createDirectories(binFile.toPath(), permissions);
-            }
+            Files.createDirectories(binFile.toPath(), permissions);
             Files.createFile(execFile.toPath(), permissions);
         } catch (SecurityException | IOException | InvalidPathException e) {
             logger.error("Error creating {} -- {}", execFile.getAbsolutePath(), e.getMessage());

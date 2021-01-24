@@ -9,12 +9,18 @@ First, download the .jar file from the latest release. If you don't have Java in
 ## Initialization
 For the best experience, it's recommended to add `gifngo` to your PATH variable.
 
+### Windows
 If you're on Windows, you can easily do this by using the `init` option whenever you run the .jar file in an administrator command prompt.
 You can run the .jar file by navigating to the directory (in an administrator command prompt) which you installed gifngo to and running `java -jar [name of jar] init`.
 This creates a .bat file which contains a command that runs the .jar file. It then adds the .bat file to your PATH.
 Because this command modifies your PATH, you'll need to restart your computer to notice a change.
 
-Once you've restarted you computer, you can open any command prompt and (hopefully) you will be able to type `gifngo help` to see a list of commands.
+Once you've restarted your computer, you can open any command prompt and (hopefully) you will be able to type `gifngo help` to see a list of commands.
+
+### Linux
+To initialize on Linux, run `sudo java -jar [path to jar] init`. Then, log out of your computer and log back in (to refresh your path). Run `gifngo help` to see a list of commands.
+
+This will automatically erase the configuration done by previous installations, so you should be able to do this without issue.
 
 # Usage
 To start recording a gif, run `gifngo` and press SHIFT and F7 on your keyboard at the same time when you are ready to start recording. Press SHIFT and F7 again to stop the recording and save it to your downloads folder.
@@ -24,6 +30,9 @@ You can pass arguments into gifngo by appending them to the end of the command w
 
 ### Help
 To view the list of commands, you can use the option `help`.
+
+### Version
+This command prints the version of gifngo that is being called.
 
 ### Frame rate
 You can set the frame rate to record at by using the option `--fps [value]` or `-f [value]`. The default value is 18.

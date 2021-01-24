@@ -2,6 +2,7 @@ package com.zackmurry.gifngo;
 
 import ch.qos.logback.classic.Level;
 import com.beust.jcommander.JCommander;
+import com.beust.jcommander.ParameterException;
 import com.tulskiy.keymaster.common.Provider;
 import com.zackmurry.gifngo.models.ImageDimension;
 import com.zackmurry.gifngo.recorder.ScreenRecorderManager;
@@ -21,7 +22,12 @@ public class Main {
                 .addObject(cla)
                 .build();
         jCommander.setProgramName("gifngo");
-        jCommander.parse(args);
+        try {
+            jCommander.parse(args);
+        } catch (ParameterException e) {
+            logger.error("Invalid parameter -- {}", e.getMessage());
+            return;
+        }
         if (!cla.isDebug()) {
             ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
             root.setLevel(Level.INFO);
@@ -32,6 +38,11 @@ public class Main {
         }
         if (cla.isInit()) {
             PathInitializer.initialize();
+            return;
+        }
+        if (cla.isVersion()) {
+            System.out.println("\ngifngo " + cla.getVersionNumber() + "\n");
+            System.out.println("Created by Zack Murry");
             return;
         }
         ScreenRecorderManager recorder = new ScreenRecorderManager(cla.getThreadCount());
